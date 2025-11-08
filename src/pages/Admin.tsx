@@ -12,6 +12,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { z } from "zod";
+
+const productSchema = z.object({
+  title: z.string()
+    .trim()
+    .min(1, "Title is required")
+    .max(200, "Title must be less than 200 characters"),
+  description: z.string()
+    .max(5000, "Description must be less than 5000 characters")
+    .optional(),
+  price: z.number()
+    .positive("Price must be positive")
+    .max(999999.99, "Price cannot exceed 999,999.99")
+    .refine((val) => Number.isFinite(val), "Invalid price"),
+  stock_quantity: z.number()
+    .int("Stock must be a whole number")
+    .min(0, "Stock cannot be negative")
+    .max(999999, "Stock cannot exceed 999,999"),
+  club: z.string()
+    .max(100, "Club name must be less than 100 characters")
+    .optional(),
+  color: z.string()
+    .max(50, "Color must be less than 50 characters")
+    .optional(),
+  category_id: z.string().optional(),
+});
+
+const imageFileSchema = z.object({
+  size: z.number().max(10 * 1024 * 1024, "Image must be less than 10MB"),
+  type: z.string().refine(
+    (type) => ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(type),
+    "Only JPG, PNG, and WEBP images are allowed"
+  ),
+});
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -87,71 +121,89 @@ const Admin = () => {
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUploading(true);
 
-    let imageUrl = productForm.image_url;
+    try {
+      // Validate file if uploaded
+      if (uploadedFile) {
+        imageFileSchema.parse({
+          size: uploadedFile.size,
+          type: uploadedFile.type,
+        });
+      }
 
-    // Upload new image if file is selected
-    if (uploadedFile) {
-      setUploading(true);
-      const fileExt = uploadedFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${fileName}`;
+      // Validate product data
+      const validatedData = productSchema.parse({
+        title: productForm.title.trim(),
+        description: productForm.description.trim() || undefined,
+        price: parseFloat(productForm.price),
+        stock_quantity: parseInt(productForm.stock_quantity),
+        club: productForm.club.trim() || undefined,
+        color: productForm.color.trim() || undefined,
+        category_id: productForm.category_id || undefined,
+      });
 
-      const { error: uploadError, data } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, uploadedFile);
+      let imageUrl = productForm.image_url;
 
+      // Upload new image if file is selected
+      if (uploadedFile) {
+        const fileExt = uploadedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, uploadedFile);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
+      const productData = {
+        title: validatedData.title,
+        description: validatedData.description || null,
+        price: validatedData.price,
+        stock_quantity: validatedData.stock_quantity,
+        category_id: validatedData.category_id || null,
+        club: validatedData.club || null,
+        color: validatedData.color || null,
+        image_url: imageUrl,
+      };
+
+      if (productForm.id) {
+        const { error } = await supabase
+          .from("products")
+          .update(productData)
+          .eq("id", productForm.id);
+
+        if (error) throw error;
+
+        toast.success("Product updated successfully!");
+      } else {
+        const { error } = await supabase.from("products").insert(productData);
+
+        if (error) throw error;
+
+        toast.success("Product added successfully!");
+      }
+
+      resetForm();
+      fetchData();
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || "Failed to save product");
+      }
+    } finally {
       setUploading(false);
-
-      if (uploadError) {
-        toast.error(`Upload failed: ${uploadError.message}`);
-        return;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-
-      imageUrl = publicUrl;
     }
-
-    const productData = {
-      title: productForm.title,
-      description: productForm.description,
-      price: parseFloat(productForm.price),
-      stock_quantity: parseInt(productForm.stock_quantity),
-      category_id: productForm.category_id || null,
-      club: productForm.club,
-      color: productForm.color,
-      image_url: imageUrl,
-    };
-
-    if (productForm.id) {
-      const { error } = await supabase
-        .from("products")
-        .update(productData)
-        .eq("id", productForm.id);
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      toast.success("Product updated successfully!");
-    } else {
-      const { error } = await supabase.from("products").insert(productData);
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      toast.success("Product added successfully!");
-    }
-
-    resetForm();
-    fetchData();
   };
 
   const handleEdit = (product: any) => {

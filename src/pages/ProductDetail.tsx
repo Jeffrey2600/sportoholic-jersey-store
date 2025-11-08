@@ -7,6 +7,24 @@ import { toast } from "sonner";
 import { ShoppingCart, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { z } from "zod";
+
+const orderSchema = z.object({
+  userName: z.string()
+    .trim()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters")
+    .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+  userEmail: z.string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Invalid email address")
+    .max(255, "Email must be less than 255 characters"),
+  quantity: z.number()
+    .int("Quantity must be a whole number")
+    .positive("Quantity must be positive")
+    .max(9999, "Quantity cannot exceed 9999"),
+});
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -57,29 +75,33 @@ const ProductDetail = () => {
       return;
     }
 
-    if (!userName || !userEmail) {
-      toast.error("Please fill in your name and email");
-      return;
-    }
-
-    if (quantity > product.stock_quantity) {
-      toast.error("Not enough stock available");
-      return;
-    }
-
     setLoading(true);
 
     try {
+      // Validate inputs
+      const validatedData = orderSchema.parse({
+        userName: userName.trim(),
+        userEmail: userEmail.trim(),
+        quantity,
+      });
+
+      // Check stock availability
+      if (validatedData.quantity > product.stock_quantity) {
+        toast.error("Not enough stock available");
+        setLoading(false);
+        return;
+      }
+
       // Create order
       const { error: orderError } = await supabase
         .from("orders")
         .insert({
           user_id: user.id,
           product_id: product.id,
-          quantity,
-          total_price: product.price * quantity,
-          user_email: userEmail,
-          user_name: userName,
+          quantity: validatedData.quantity,
+          total_price: product.price * validatedData.quantity,
+          user_email: validatedData.userEmail,
+          user_name: validatedData.userName,
         });
 
       if (orderError) throw orderError;
@@ -87,7 +109,7 @@ const ProductDetail = () => {
       // Update stock
       const { error: stockError } = await supabase
         .from("products")
-        .update({ stock_quantity: product.stock_quantity - quantity })
+        .update({ stock_quantity: product.stock_quantity - validatedData.quantity })
         .eq("id", product.id);
 
       if (stockError) throw stockError;
@@ -97,10 +119,10 @@ const ProductDetail = () => {
         body: {
           orderDetails: {
             productTitle: product.title,
-            quantity,
-            totalPrice: product.price * quantity,
-            userName,
-            userEmail,
+            quantity: validatedData.quantity,
+            totalPrice: product.price * validatedData.quantity,
+            userName: validatedData.userName,
+            userEmail: validatedData.userEmail,
           },
         },
       });
@@ -108,7 +130,11 @@ const ProductDetail = () => {
       toast.success("Order placed successfully! Check your email for confirmation.");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message || "Failed to place order");
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || "Failed to place order");
+      }
     } finally {
       setLoading(false);
     }
