@@ -78,6 +78,11 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             {user ? (
               <>
+                <Button asChild variant="ghost" size="icon">
+                  <Link to="/profile">
+                    <User className="h-5 w-5" />
+                  </Link>
+                </Button>
                 {isAdmin && (
                   <Button asChild variant="outline" size="sm">
                     <Link to="/admin">Admin</Link>
