@@ -103,7 +103,7 @@ const Products = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
           All Jerseys
         </h1>
 

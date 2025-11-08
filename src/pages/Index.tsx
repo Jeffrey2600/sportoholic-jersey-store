@@ -39,10 +39,10 @@ const Index = () => {
       <section className="relative overflow-hidden py-20 px-4">
         <div className="absolute inset-0 bg-gradient-to-br from-sport-red/20 to-transparent" />
         <div className="container mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
             SPORTOHOLIC
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl mb-8 text-muted-foreground max-w-2xl mx-auto px-4">
             Premium Sports Jerseys for True Fans
           </p>
           <Button
@@ -59,7 +59,7 @@ const Index = () => {
       {/* Categories */}
       <section className="py-12 px-4 bg-card/50">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">Shop by Sport</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center">Shop by Sport</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.map((category) => (
               <button
@@ -80,7 +80,7 @@ const Index = () => {
       {/* Featured Products */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">Featured Jerseys</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center">Featured Jerseys</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {featuredProducts.map((product) => (
               <ProductCard

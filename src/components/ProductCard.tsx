@@ -53,10 +53,10 @@ const ProductCard = ({
           </div>
         )}
       </div>
-      <CardContent className="p-4">
-        <h3 className="font-bold text-lg mb-1 line-clamp-1">{title}</h3>
+      <CardContent className="p-3 sm:p-4">
+        <h3 className="font-bold text-base sm:text-lg mb-1 line-clamp-1">{title}</h3>
         {club && <p className="text-xs text-muted-foreground mb-2">{club}</p>}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{description}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3">{description}</p>
         {sizes && sizes.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {sizes.slice(0, 4).map((size) => (
@@ -69,14 +69,14 @@ const ProductCard = ({
             )}
           </div>
         )}
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-primary">₹{price.toFixed(2)}</span>
-          <span className={`text-sm ${stockQuantity > 0 ? 'text-green-500' : 'text-destructive'}`}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <span className="text-xl sm:text-2xl font-bold text-primary">₹{price.toFixed(2)}</span>
+          <span className={`text-xs sm:text-sm ${stockQuantity > 0 ? 'text-green-500' : 'text-destructive'}`}>
             {stockQuantity > 0 ? `${stockQuantity} in stock` : 'Out of stock'}
           </span>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-3 sm:p-4 pt-0">
         <Button 
           className="w-full bg-gradient-to-r from-sport-red to-sport-red-dark hover:opacity-90 transition-opacity"
           disabled={stockQuantity === 0}

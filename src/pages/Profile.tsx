@@ -112,15 +112,15 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-8 sm:py-16">
         <Card className="max-w-2xl mx-auto border-border bg-gradient-to-br from-card to-card/80 shadow-[var(--shadow-card)]">
           <CardHeader className="border-b border-border/50">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+                <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
                   My Profile
                 </CardTitle>
-                <CardDescription>View and manage your account information</CardDescription>
+                <CardDescription className="text-sm sm:text-base">View and manage your account information</CardDescription>
               </div>
               <Button
                 variant={editing ? "outline" : "default"}

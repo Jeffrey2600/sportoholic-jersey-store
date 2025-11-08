@@ -249,14 +249,14 @@ const ProductDetail = () => {
           </div>
 
           <div>
-            <h1 className="text-4xl font-bold mb-4">{product.title}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">{product.title}</h1>
             {product.sku && (
-              <p className="text-sm text-muted-foreground font-mono mb-2">SKU: {product.sku}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-mono mb-2">SKU: {product.sku}</p>
             )}
             {product.club && (
-              <p className="text-lg text-muted-foreground mb-2">{product.club}</p>
+              <p className="text-base sm:text-lg text-muted-foreground mb-2">{product.club}</p>
             )}
-            <p className="text-3xl font-bold text-primary mb-6">
+            <p className="text-2xl sm:text-3xl font-bold text-primary mb-6">
               ₹{product.price.toFixed(2)}
             </p>
 

@@ -106,12 +106,12 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-border bg-gradient-to-br from-card to-card/80 shadow-[var(--shadow-card)]">
-        <CardHeader className="text-center border-b border-border/50">
-          <img src={logo} alt="Sportoholic Logo" className="h-20 w-auto mx-auto mb-4" />
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+        <CardHeader className="text-center border-b border-border/50 space-y-2 sm:space-y-4">
+          <img src={logo} alt="Sportoholic Logo" className="h-16 sm:h-20 w-auto mx-auto mb-2 sm:mb-4" />
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
             {isLogin ? "Welcome Back" : "Join Sportoholic"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             {isLogin ? "Enter your credentials to access your account" : "Create your account and get your favorite jerseys"}
           </CardDescription>
         </CardHeader>
