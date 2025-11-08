@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShoppingCart, ArrowLeft } from "lucide-react";
+import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { z } from "zod";
@@ -35,6 +35,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     fetchProduct();
@@ -75,6 +77,11 @@ const ProductDetail = () => {
       return;
     }
 
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast.error("Please select a size");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -102,6 +109,7 @@ const ProductDetail = () => {
           total_price: product.price * validatedData.quantity,
           user_email: validatedData.userEmail,
           user_name: validatedData.userName,
+          product_sku: product.sku,
         });
 
       if (orderError) throw orderError;
@@ -140,6 +148,20 @@ const ProductDetail = () => {
     }
   };
 
+  const productImages = product?.images && product.images.length > 0 
+    ? product.images 
+    : product?.image_url 
+    ? [product.image_url] 
+    : [];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+  };
+
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
@@ -166,22 +188,71 @@ const ProductDetail = () => {
         </Button>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="aspect-square rounded-lg overflow-hidden bg-secondary">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-sport-red to-sport-red-dark">
-                <ShoppingCart className="h-32 w-32 text-primary-foreground/50" />
+          <div>
+            <div className="aspect-square rounded-lg overflow-hidden bg-secondary relative group">
+              {productImages.length > 0 ? (
+                <>
+                  <img
+                    src={productImages[currentImageIndex]}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {productImages.length > 1 && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={prevImage}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={nextImage}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-sport-red to-sport-red-dark">
+                  <ShoppingCart className="h-32 w-32 text-primary-foreground/50" />
+                </div>
+              )}
+            </div>
+
+            {productImages.length > 1 && (
+              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                {productImages.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                      currentImageIndex === index 
+                        ? 'border-primary scale-105' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.title} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
           <div>
             <h1 className="text-4xl font-bold mb-4">{product.title}</h1>
+            {product.sku && (
+              <p className="text-sm text-muted-foreground font-mono mb-2">SKU: {product.sku}</p>
+            )}
             {product.club && (
               <p className="text-lg text-muted-foreground mb-2">{product.club}</p>
             )}
@@ -190,6 +261,27 @@ const ProductDetail = () => {
             </p>
 
             <p className="text-muted-foreground mb-6">{product.description}</p>
+
+            {product.sizes && product.sizes.length > 0 && (
+              <div className="mb-6">
+                <Label className="text-base mb-3 block">Select Size</Label>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size: string) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-4 py-2 border-2 rounded-lg font-medium transition-all ${
+                        selectedSize === size
+                          ? 'border-primary bg-primary text-primary-foreground scale-105'
+                          : 'border-border hover:border-primary/50 hover:scale-105'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mb-6">
               <p className={`text-lg font-semibold ${product.stock_quantity > 0 ? 'text-green-500' : 'text-destructive'}`}>

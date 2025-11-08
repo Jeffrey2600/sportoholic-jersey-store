@@ -37,6 +37,12 @@ const productSchema = z.object({
     .max(50, "Color must be less than 50 characters")
     .optional(),
   category_id: z.string().optional(),
+  sku: z.string()
+    .trim()
+    .min(1, "SKU is required")
+    .max(50, "SKU must be less than 50 characters")
+    .regex(/^[A-Z0-9-]+$/, "SKU must contain only uppercase letters, numbers, and hyphens"),
+  sizes: z.array(z.string()).optional(),
 });
 
 const imageFileSchema = z.object({
@@ -54,10 +60,12 @@ const Admin = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [sizeInput, setSizeInput] = useState("");
+  const [sizes, setSizes] = useState<string[]>([]);
   
   // Product form
   const [productForm, setProductForm] = useState({
@@ -69,7 +77,8 @@ const Admin = () => {
     category_id: "",
     club: "",
     color: "",
-    image_url: "",
+    sku: "",
+    images: [] as string[],
   });
 
   useEffect(() => {
@@ -124,11 +133,11 @@ const Admin = () => {
     setUploading(true);
 
     try {
-      // Validate file if uploaded
-      if (uploadedFile) {
+      // Validate files if uploaded
+      for (const file of uploadedFiles) {
         imageFileSchema.parse({
-          size: uploadedFile.size,
-          type: uploadedFile.type,
+          size: file.size,
+          type: file.type,
         });
       }
 
@@ -141,28 +150,35 @@ const Admin = () => {
         club: productForm.club.trim() || undefined,
         color: productForm.color.trim() || undefined,
         category_id: productForm.category_id || undefined,
+        sku: productForm.sku.trim(),
+        sizes: sizes.length > 0 ? sizes : undefined,
       });
 
-      let imageUrl = productForm.image_url;
+      let imageUrls = [...productForm.images];
 
-      // Upload new image if file is selected
-      if (uploadedFile) {
-        const fileExt = uploadedFile.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
+      // Upload new images if files are selected
+      if (uploadedFiles.length > 0) {
+        const uploadPromises = uploadedFiles.map(async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const filePath = `${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(filePath, uploadedFile);
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(filePath);
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(filePath);
 
-        imageUrl = publicUrl;
+          return publicUrl;
+        });
+
+        const newUrls = await Promise.all(uploadPromises);
+        imageUrls = [...imageUrls, ...newUrls];
       }
 
       const productData = {
@@ -173,7 +189,10 @@ const Admin = () => {
         category_id: validatedData.category_id || null,
         club: validatedData.club || null,
         color: validatedData.color || null,
-        image_url: imageUrl,
+        sku: validatedData.sku,
+        images: imageUrls,
+        sizes: validatedData.sizes || [],
+        image_url: imageUrls[0] || null,
       };
 
       if (productForm.id) {
@@ -216,10 +235,12 @@ const Admin = () => {
       category_id: product.category_id || "",
       club: product.club || "",
       color: product.color || "",
-      image_url: product.image_url || "",
+      sku: product.sku || "",
+      images: product.images || [],
     });
-    setImagePreview(product.image_url || "");
-    setUploadedFile(null);
+    setImagePreviews(product.images || []);
+    setSizes(product.sizes || []);
+    setUploadedFiles([]);
   };
 
   const handleDelete = async (id: string) => {
@@ -246,17 +267,21 @@ const Admin = () => {
       category_id: "",
       club: "",
       color: "",
-      image_url: "",
+      sku: "",
+      images: [],
     });
-    setUploadedFile(null);
-    setImagePreview("");
+    setUploadedFiles([]);
+    setImagePreviews([]);
+    setSizes([]);
+    setSizeInput("");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      setImagePreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setUploadedFiles([...uploadedFiles, ...files]);
+      const previews = files.map(file => URL.createObjectURL(file));
+      setImagePreviews([...imagePreviews, ...previews]);
     }
   };
 
@@ -265,12 +290,13 @@ const Admin = () => {
     e.stopPropagation();
     setDragActive(false);
 
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setUploadedFile(file);
-      setImagePreview(URL.createObjectURL(file));
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+    if (files.length > 0) {
+      setUploadedFiles([...uploadedFiles, ...files]);
+      const previews = files.map(file => URL.createObjectURL(file));
+      setImagePreviews([...imagePreviews, ...previews]);
     } else {
-      toast.error("Please upload an image file");
+      toast.error("Please upload image files");
     }
   };
 
@@ -284,10 +310,29 @@ const Admin = () => {
     }
   };
 
-  const removeImage = () => {
-    setUploadedFile(null);
-    setImagePreview("");
-    setProductForm({ ...productForm, image_url: "" });
+  const removeImage = (index: number) => {
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    setImagePreviews(newPreviews);
+    
+    // Also remove from existing images if editing
+    if (index < productForm.images.length) {
+      const newImages = productForm.images.filter((_, i) => i !== index);
+      setProductForm({ ...productForm, images: newImages });
+    }
+  };
+
+  const addSize = () => {
+    const trimmedSize = sizeInput.trim().toUpperCase();
+    if (trimmedSize && !sizes.includes(trimmedSize)) {
+      setSizes([...sizes, trimmedSize]);
+      setSizeInput("");
+    }
+  };
+
+  const removeSize = (sizeToRemove: string) => {
+    setSizes(sizes.filter(s => s !== sizeToRemove));
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
@@ -404,8 +449,54 @@ const Admin = () => {
                       />
                     </div>
 
+                    <div>
+                      <Label htmlFor="sku">SKU (Product Code) *</Label>
+                      <Input
+                        id="sku"
+                        value={productForm.sku}
+                        onChange={(e) => setProductForm({ ...productForm, sku: e.target.value.toUpperCase() })}
+                        placeholder="PROD-001"
+                        required
+                      />
+                    </div>
+
                     <div className="md:col-span-2">
-                      <Label>Product Image</Label>
+                      <Label htmlFor="size">Available Sizes</Label>
+                      <div className="flex gap-2 mb-2">
+                        <Input
+                          id="size"
+                          value={sizeInput}
+                          onChange={(e) => setSizeInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSize())}
+                          placeholder="e.g., S, M, L, XL, 38, 40"
+                        />
+                        <Button type="button" onClick={addSize} variant="outline">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {sizes.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {sizes.map((size) => (
+                            <span
+                              key={size}
+                              className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-md border border-primary/20"
+                            >
+                              {size}
+                              <button
+                                type="button"
+                                onClick={() => removeSize(size)}
+                                className="hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label>Product Images (Multiple)</Label>
                       <div
                         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                           dragActive ? "border-primary bg-primary/5" : "border-border"
@@ -415,22 +506,26 @@ const Admin = () => {
                         onDragOver={handleDrag}
                         onDrop={handleDrop}
                       >
-                        {imagePreview ? (
-                          <div className="relative inline-block">
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="max-h-48 rounded-lg"
-                            />
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="destructive"
-                              className="absolute top-2 right-2"
-                              onClick={removeImage}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                        {imagePreviews.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-4">
+                            {imagePreviews.map((preview, index) => (
+                              <div key={index} className="relative">
+                                <img
+                                  src={preview}
+                                  alt={`Preview ${index + 1}`}
+                                  className="h-32 w-full object-cover rounded-lg"
+                                />
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="destructive"
+                                  className="absolute top-1 right-1"
+                                  onClick={() => removeImage(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
                         ) : (
                           <div className="space-y-3">
@@ -447,6 +542,7 @@ const Admin = () => {
                                 type="file"
                                 className="hidden"
                                 accept="image/*"
+                                multiple
                                 onChange={handleFileChange}
                               />
                             </div>
@@ -496,20 +592,32 @@ const Admin = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>SKU</TableHead>
                         <TableHead>Title</TableHead>
                         <TableHead>Price</TableHead>
                         <TableHead>Stock</TableHead>
-                        <TableHead>Club</TableHead>
+                        <TableHead>Sizes</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {products.map((product) => (
                         <TableRow key={product.id}>
+                          <TableCell className="font-mono text-xs">{product.sku}</TableCell>
                           <TableCell>{product.title}</TableCell>
                           <TableCell>₹{product.price}</TableCell>
                           <TableCell>{product.stock_quantity}</TableCell>
-                          <TableCell>{product.club || "-"}</TableCell>
+                          <TableCell>
+                            {product.sizes && product.sizes.length > 0 ? (
+                              <div className="flex gap-1 flex-wrap">
+                                {product.sizes.map((size: string) => (
+                                  <span key={size} className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
+                                    {size}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : "-"}
+                          </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
@@ -554,7 +662,12 @@ const Admin = () => {
                         <TableRow key={order.id}>
                           <TableCell>{order.user_name}</TableCell>
                           <TableCell>{order.user_email}</TableCell>
-                          <TableCell>{order.products?.title}</TableCell>
+                          <TableCell>
+                            <div>{order.products?.title}</div>
+                            {order.product_sku && (
+                              <div className="text-xs text-muted-foreground font-mono">SKU: {order.product_sku}</div>
+                            )}
+                          </TableCell>
                           <TableCell>{order.quantity}</TableCell>
                           <TableCell>₹{order.total_price}</TableCell>
                           <TableCell>

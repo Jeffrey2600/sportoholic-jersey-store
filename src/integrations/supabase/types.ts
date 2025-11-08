@@ -40,6 +40,7 @@ export type Database = {
           created_at: string | null
           id: string
           product_id: string
+          product_sku: string | null
           quantity: number
           status: string
           total_price: number
@@ -51,6 +52,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           product_id: string
+          product_sku?: string | null
           quantity?: number
           status?: string
           total_price: number
@@ -62,6 +64,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           product_id?: string
+          product_sku?: string | null
           quantity?: number
           status?: string
           total_price?: number
@@ -88,7 +91,10 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          images: string[] | null
           price: number
+          sizes: string[] | null
+          sku: string | null
           stock_quantity: number
           title: string
           updated_at: string | null
@@ -101,7 +107,10 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
           price: number
+          sizes?: string[] | null
+          sku?: string | null
           stock_quantity?: number
           title: string
           updated_at?: string | null
@@ -114,7 +123,10 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
           price?: number
+          sizes?: string[] | null
+          sku?: string | null
           stock_quantity?: number
           title?: string
           updated_at?: string | null

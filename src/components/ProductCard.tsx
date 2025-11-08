@@ -11,8 +11,11 @@ interface ProductCardProps {
   price: number;
   stockQuantity: number;
   imageUrl?: string;
+  images?: string[];
   club?: string;
   color?: string;
+  sku?: string;
+  sizes?: string[];
 }
 
 const ProductCard = ({
@@ -22,10 +25,14 @@ const ProductCard = ({
   price,
   stockQuantity,
   imageUrl,
+  images,
   club,
+  sizes,
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
+
+  const displayImage = images && images.length > 0 ? images[0] : imageUrl;
 
   return (
     <Card 
@@ -33,9 +40,9 @@ const ProductCard = ({
       onClick={() => navigate(`/product/${id}`)}
     >
       <div className="aspect-square overflow-hidden bg-secondary">
-        {imageUrl && !imageError ? (
+        {displayImage && !imageError ? (
           <img
-            src={imageUrl}
+            src={displayImage}
             alt={title}
             className="h-full w-full object-cover transition-transform group-hover:scale-110"
             onError={() => setImageError(true)}
@@ -50,6 +57,18 @@ const ProductCard = ({
         <h3 className="font-bold text-lg mb-1 line-clamp-1">{title}</h3>
         {club && <p className="text-xs text-muted-foreground mb-2">{club}</p>}
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{description}</p>
+        {sizes && sizes.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {sizes.slice(0, 4).map((size) => (
+              <span key={size} className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium border border-primary/20">
+                {size}
+              </span>
+            ))}
+            {sizes.length > 4 && (
+              <span className="px-2 py-0.5 text-muted-foreground text-xs">+{sizes.length - 4}</span>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <span className="text-2xl font-bold text-primary">₹{price.toFixed(2)}</span>
           <span className={`text-sm ${stockQuantity > 0 ? 'text-green-500' : 'text-destructive'}`}>

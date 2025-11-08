@@ -13,8 +13,10 @@ const Products = () => {
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSize, setSelectedSize] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [categories, setCategories] = useState<any[]>([]);
+  const [availableSizes, setAvailableSizes] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCategories();
@@ -30,7 +32,18 @@ const Products = () => {
 
   useEffect(() => {
     filterAndSortProducts();
-  }, [products, searchQuery, selectedCategory, sortBy]);
+  }, [products, searchQuery, selectedCategory, selectedSize, sortBy]);
+
+  useEffect(() => {
+    // Extract unique sizes from all products
+    const sizes = new Set<string>();
+    products.forEach(product => {
+      if (product.sizes && Array.isArray(product.sizes)) {
+        product.sizes.forEach((size: string) => sizes.add(size));
+      }
+    });
+    setAvailableSizes(Array.from(sizes).sort());
+  }, [products]);
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*");
@@ -66,6 +79,13 @@ const Products = () => {
       );
     }
 
+    // Size filter
+    if (selectedSize && selectedSize !== "all") {
+      filtered = filtered.filter(
+        (p) => p.sizes && Array.isArray(p.sizes) && p.sizes.includes(selectedSize)
+      );
+    }
+
     // Sort
     if (sortBy === "price-low") {
       filtered.sort((a, b) => a.price - b.price);
@@ -88,7 +108,7 @@ const Products = () => {
         </h1>
 
         {/* Filters */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -108,6 +128,20 @@ const Products = () => {
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.slug}>
                   {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedSize} onValueChange={setSelectedSize}>
+            <SelectTrigger>
+              <SelectValue placeholder="All Sizes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sizes</SelectItem>
+              {availableSizes.map((size) => (
+                <SelectItem key={size} value={size}>
+                  {size}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -136,8 +170,11 @@ const Products = () => {
               price={product.price}
               stockQuantity={product.stock_quantity}
               imageUrl={product.image_url}
+              images={product.images}
               club={product.club}
               color={product.color}
+              sku={product.sku}
+              sizes={product.sizes}
             />
           ))}
         </div>
