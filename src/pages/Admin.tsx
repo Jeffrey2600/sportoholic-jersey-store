@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const Admin = () => {
@@ -20,6 +20,10 @@ const Admin = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   
   // Product form
   const [productForm, setProductForm] = useState({
@@ -84,6 +88,34 @@ const Admin = () => {
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    let imageUrl = productForm.image_url;
+
+    // Upload new image if file is selected
+    if (uploadedFile) {
+      setUploading(true);
+      const fileExt = uploadedFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, uploadedFile);
+
+      setUploading(false);
+
+      if (uploadError) {
+        toast.error(`Upload failed: ${uploadError.message}`);
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      imageUrl = publicUrl;
+    }
+
     const productData = {
       title: productForm.title,
       description: productForm.description,
@@ -92,7 +124,7 @@ const Admin = () => {
       category_id: productForm.category_id || null,
       club: productForm.club,
       color: productForm.color,
-      image_url: productForm.image_url,
+      image_url: imageUrl,
     };
 
     if (productForm.id) {
@@ -134,6 +166,8 @@ const Admin = () => {
       color: product.color || "",
       image_url: product.image_url || "",
     });
+    setImagePreview(product.image_url || "");
+    setUploadedFile(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -162,6 +196,46 @@ const Admin = () => {
       color: "",
       image_url: "",
     });
+    setUploadedFile(null);
+    setImagePreview("");
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setUploadedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      toast.error("Please upload an image file");
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const removeImage = () => {
+    setUploadedFile(null);
+    setImagePreview("");
+    setProductForm({ ...productForm, image_url: "" });
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
@@ -279,12 +353,57 @@ const Admin = () => {
                     </div>
 
                     <div className="md:col-span-2">
-                      <Label htmlFor="image">Image URL</Label>
-                      <Input
-                        id="image"
-                        value={productForm.image_url}
-                        onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-                      />
+                      <Label>Product Image</Label>
+                      <div
+                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          dragActive ? "border-primary bg-primary/5" : "border-border"
+                        }`}
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                      >
+                        {imagePreview ? (
+                          <div className="relative inline-block">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="max-h-48 rounded-lg"
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="absolute top-2 right-2"
+                              onClick={removeImage}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <div>
+                              <label htmlFor="file-upload" className="cursor-pointer">
+                                <span className="text-primary hover:underline">
+                                  Click to upload
+                                </span>
+                                <span className="text-muted-foreground"> or drag and drop</span>
+                              </label>
+                              <input
+                                id="file-upload"
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              PNG, JPG, WEBP up to 10MB
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="md:col-span-2">
@@ -299,8 +418,12 @@ const Admin = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button type="submit" className="bg-gradient-to-r from-sport-red to-sport-red-dark">
-                      {productForm.id ? "Update Product" : "Add Product"}
+                    <Button 
+                      type="submit" 
+                      className="bg-gradient-to-r from-sport-red to-sport-red-dark"
+                      disabled={uploading}
+                    >
+                      {uploading ? "Uploading..." : productForm.id ? "Update Product" : "Add Product"}
                     </Button>
                     {productForm.id && (
                       <Button type="button" variant="outline" onClick={resetForm}>
