@@ -91,6 +91,9 @@ const Index = () => {
                 price={product.price}
                 stockQuantity={product.stock_quantity}
                 imageUrl={product.image_url}
+                images={product.images || []}
+                sku={product.sku || ""}
+                sizes={product.sizes || []}
                 club={product.club}
                 color={product.color}
               />

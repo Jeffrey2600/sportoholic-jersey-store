@@ -26,6 +26,9 @@ const signupSchema = loginSchema.extend({
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters")
     .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
+  phoneNumber: z.string()
+    .trim()
+    .regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number (e.g., +1234567890)"),
   password: z.string()
     .min(8, "Password must be at least 8 characters")
     .max(72, "Password must be less than 72 characters")
@@ -40,6 +43,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -69,7 +73,7 @@ const Auth = () => {
         toast.success("Logged in successfully!");
         navigate("/");
       } else {
-        const validatedData = signupSchema.parse({ email, password, fullName });
+        const validatedData = signupSchema.parse({ email, password, fullName, phoneNumber });
         
         const { error } = await supabase.auth.signUp({
           email: validatedData.email,
@@ -77,6 +81,7 @@ const Auth = () => {
           options: {
             data: {
               full_name: validatedData.fullName,
+              phone_number: validatedData.phoneNumber,
             },
             emailRedirectTo: `${window.location.origin}/`,
           },
@@ -100,30 +105,46 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-border">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md border-border bg-gradient-to-br from-card to-card/80 shadow-[var(--shadow-card)]">
+        <CardHeader className="text-center border-b border-border/50">
           <img src={logo} alt="Sportoholic Logo" className="h-20 w-auto mx-auto mb-4" />
-          <CardTitle className="text-2xl font-bold">
-            {isLogin ? "Welcome Back" : "Create Account"}
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+            {isLogin ? "Welcome Back" : "Join Sportoholic"}
           </CardTitle>
           <CardDescription>
-            {isLogin ? "Login to your account" : "Sign up to start shopping"}
+            {isLogin ? "Enter your credentials to access your account" : "Create your account and get your favorite jerseys"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div>
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required={!isLogin}
-                  placeholder="Enter your full name"
-                />
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required={!isLogin}
+                    placeholder="John Doe"
+                    className="bg-secondary/50 border-border"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required={!isLogin}
+                    placeholder="+1234567890"
+                    className="bg-secondary/50 border-border"
+                  />
+                </div>
+              </>
             )}
 
             <div>
@@ -134,7 +155,8 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Enter your email"
+                placeholder="your@email.com"
+                className="bg-secondary/50 border-border"
               />
             </div>
 
@@ -146,8 +168,9 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 minLength={6}
+                className="bg-secondary/50 border-border"
               />
             </div>
 
@@ -156,16 +179,16 @@ const Auth = () => {
               className="w-full bg-gradient-to-r from-sport-red to-sport-red-dark hover:opacity-90 transition-opacity"
               disabled={loading}
             >
-              {loading ? "Processing..." : isLogin ? "Login" : "Sign Up"}
+              {loading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
             </Button>
 
             <Button
               type="button"
               variant="ghost"
-              className="w-full"
+              className="w-full hover:bg-secondary/50"
               onClick={() => setIsLogin(!isLogin)}
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
+              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
             </Button>
           </form>
         </CardContent>
