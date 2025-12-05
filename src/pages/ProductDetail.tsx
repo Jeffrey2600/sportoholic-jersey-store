@@ -326,7 +326,7 @@ const ProductDetail = () => {
 
             <Button
               size="lg"
-              className="w-full bg-gradient-to-r from-sport-red to-sport-red-dark hover:opacity-90 transition-opacity"
+              className="w-full bg-foreground text-background hover:bg-foreground/90"
               onClick={handleOrder}
               disabled={product.stock_quantity === 0 || loading}
             >

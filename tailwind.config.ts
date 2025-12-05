@@ -51,6 +51,7 @@ export default {
           red: "hsl(var(--sport-red))",
           "red-dark": "hsl(var(--sport-red-dark))",
           glow: "hsl(var(--sport-glow))",
+          accent: "hsl(var(--sport-accent))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

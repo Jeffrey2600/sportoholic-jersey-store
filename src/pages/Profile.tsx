@@ -113,20 +113,20 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8 sm:py-16">
-        <Card className="max-w-2xl mx-auto border-border bg-gradient-to-br from-card to-card/80 shadow-[var(--shadow-card)]">
-          <CardHeader className="border-b border-border/50">
+        <Card className="max-w-2xl mx-auto border-border bg-card shadow-[var(--shadow-card)]">
+          <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+                <CardTitle className="text-xl sm:text-2xl font-bold">
                   My Profile
                 </CardTitle>
-                <CardDescription className="text-sm sm:text-base">View and manage your account information</CardDescription>
+                <CardDescription className="text-sm">View and manage your account information</CardDescription>
               </div>
               <Button
                 variant={editing ? "outline" : "default"}
                 size="sm"
                 onClick={() => setEditing(!editing)}
-                className={!editing ? "bg-gradient-to-r from-sport-red to-sport-red-dark" : ""}
+                className={!editing ? "bg-foreground text-background hover:bg-foreground/90" : ""}
               >
                 <Edit2 className="h-4 w-4 mr-2" />
                 {editing ? "Cancel" : "Edit"}
@@ -196,7 +196,7 @@ const Profile = () => {
             {editing && (
               <Button
                 onClick={handleUpdate}
-                className="w-full bg-gradient-to-r from-sport-red to-sport-red-dark hover:opacity-90 transition-opacity"
+                className="w-full bg-foreground text-background hover:bg-foreground/90"
               >
                 Save Changes
               </Button>
