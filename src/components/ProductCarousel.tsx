@@ -7,6 +7,7 @@ interface Product {
   title: string;
   description: string | null;
   price: number;
+  compare_at_price: number | null;
   stock_quantity: number;
   image_url: string | null;
   images: string[] | null;
@@ -70,6 +71,7 @@ const ProductCarousel = ({ products, title }: ProductCarouselProps) => {
                 title={product.title}
                 description={product.description || ""}
                 price={product.price}
+                compareAtPrice={product.compare_at_price}
                 stockQuantity={product.stock_quantity}
                 imageUrl={product.image_url || undefined}
                 images={product.images || []}
