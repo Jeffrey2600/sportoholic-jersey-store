@@ -77,6 +77,7 @@ const Index = () => {
                 title={product.title}
                 description={product.description || ""}
                 price={product.price}
+                compareAtPrice={product.compare_at_price}
                 stockQuantity={product.stock_quantity}
                 imageUrl={product.image_url}
                 images={product.images || []}

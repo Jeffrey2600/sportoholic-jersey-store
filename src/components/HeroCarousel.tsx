@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Carousel,
   CarouselContent,
@@ -10,32 +10,31 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 
-interface HeroSlide {
+interface SlideData {
   title: string;
-  subtitle: string;
-  cta: string;
-  bgColor: string;
-  image?: string;
+  subtitle: string | null;
+  cta_text: string | null;
+  cta_link: string | null;
+  image_url: string | null;
+  bg_color: string | null;
 }
 
-const slides: HeroSlide[] = [
+const defaultSlides: SlideData[] = [
   {
     title: "Suit Up. Play Bold.",
     subtitle: "Explore our latest collections and wear your passion!",
-    cta: "Explore Collection",
-    bgColor: "bg-foreground",
+    cta_text: "Explore Collection",
+    cta_link: "/products",
+    bg_color: "bg-foreground",
+    image_url: null,
   },
   {
     title: "New Season Jerseys",
     subtitle: "24/25 Season kits now available",
-    cta: "Shop Now",
-    bgColor: "bg-foreground",
-  },
-  {
-    title: "Retro Collection",
-    subtitle: "Classic jerseys from legendary seasons",
-    cta: "View Retro",
-    bgColor: "bg-foreground",
+    cta_text: "Shop Now",
+    cta_link: "/products",
+    bg_color: "bg-foreground",
+    image_url: null,
   },
 ];
 
@@ -43,6 +42,33 @@ const HeroCarousel = () => {
   const navigate = useNavigate();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const [slides, setSlides] = useState<SlideData[]>(defaultSlides);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
+    const { data, error } = await supabase
+      .from("banners")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      const bannerSlides: SlideData[] = data.map((banner) => ({
+        title: banner.title,
+        subtitle: banner.subtitle,
+        cta_text: banner.cta_text,
+        cta_link: banner.cta_link,
+        image_url: banner.image_url,
+        bg_color: banner.bg_color,
+      }));
+      setSlides(bannerSlides);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!api) return;
@@ -51,6 +77,20 @@ const HeroCarousel = () => {
       setCurrent(api.selectedScrollSnap());
     });
   }, [api]);
+
+  if (loading) {
+    return (
+      <div className="bg-foreground text-background">
+        <div className="container mx-auto px-4 py-12 md:py-20">
+          <div className="max-w-lg animate-pulse">
+            <div className="h-10 bg-background/20 rounded mb-4 w-3/4"></div>
+            <div className="h-6 bg-background/20 rounded mb-6 w-1/2"></div>
+            <div className="h-12 bg-background/20 rounded w-40"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -71,8 +111,18 @@ const HeroCarousel = () => {
         <CarouselContent>
           {slides.map((slide, index) => (
             <CarouselItem key={index}>
-              <div className={`${slide.bgColor} text-background`}>
-                <div className="container mx-auto px-4 py-12 md:py-20">
+              <div 
+                className={`${slide.bg_color?.startsWith('bg-') ? slide.bg_color : ''} text-background relative`}
+                style={!slide.bg_color?.startsWith('bg-') ? { backgroundColor: slide.bg_color || '#1a1a2e' } : undefined}
+              >
+                {slide.image_url && (
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title}
+                    className="absolute inset-0 w-full h-full object-cover opacity-30"
+                  />
+                )}
+                <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
                   <div className="max-w-lg">
                     <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
                       {slide.title}
@@ -84,9 +134,9 @@ const HeroCarousel = () => {
                       size="lg"
                       variant="secondary"
                       className="bg-background text-foreground hover:bg-background/90"
-                      onClick={() => navigate("/products")}
+                      onClick={() => navigate(slide.cta_link || '/products')}
                     >
-                      {slide.cta}
+                      {slide.cta_text || 'Shop Now'}
                     </Button>
                   </div>
                 </div>

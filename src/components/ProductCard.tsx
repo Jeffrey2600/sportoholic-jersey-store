@@ -8,6 +8,7 @@ interface ProductCardProps {
   title: string;
   description: string;
   price: number;
+  compareAtPrice?: number | null;
   stockQuantity: number;
   imageUrl?: string;
   images?: string[];
@@ -21,6 +22,7 @@ const ProductCard = ({
   id,
   title,
   price,
+  compareAtPrice,
   stockQuantity,
   imageUrl,
   images,
@@ -58,7 +60,17 @@ const ProductCard = ({
       <div className="p-3">
         <h3 className="font-medium text-sm line-clamp-2 mb-1">{title}</h3>
         {club && <p className="text-xs text-muted-foreground mb-2">{club}</p>}
-        <p className="text-base font-bold">₹{price.toFixed(0)}</p>
+        <div className="flex items-center gap-2">
+          {compareAtPrice && compareAtPrice > price && (
+            <span className="text-sm text-muted-foreground line-through">₹{compareAtPrice.toFixed(0)}</span>
+          )}
+          <span className="text-base font-bold">₹{price.toFixed(0)}</span>
+          {compareAtPrice && compareAtPrice > price && (
+            <span className="text-xs text-green-600 font-medium">
+              {Math.round(((compareAtPrice - price) / compareAtPrice) * 100)}% off
+            </span>
+          )}
+        </div>
       </div>
     </Card>
   );

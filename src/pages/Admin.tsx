@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Upload, X } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, X, Image } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { z } from "zod";
+import { Switch } from "@/components/ui/switch";
 
 const productSchema = z.object({
   title: z.string()
@@ -26,6 +27,11 @@ const productSchema = z.object({
     .positive("Price must be positive")
     .max(999999.99, "Price cannot exceed 999,999.99")
     .refine((val) => Number.isFinite(val), "Invalid price"),
+  compare_at_price: z.number()
+    .positive("Compare at price must be positive")
+    .max(999999.99, "Compare at price cannot exceed 999,999.99")
+    .optional()
+    .nullable(),
   stock_quantity: z.number()
     .int("Stock must be a whole number")
     .min(0, "Stock cannot be negative")
@@ -53,6 +59,16 @@ const imageFileSchema = z.object({
   ),
 });
 
+const bannerSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
+  subtitle: z.string().max(200, "Subtitle must be less than 200 characters").optional(),
+  cta_text: z.string().max(50, "CTA text must be less than 50 characters").optional(),
+  cta_link: z.string().max(200, "CTA link must be less than 200 characters").optional(),
+  bg_color: z.string().max(20, "Background color must be less than 20 characters").optional(),
+  display_order: z.number().int().min(0).max(100).optional(),
+  is_active: z.boolean().optional(),
+});
+
 const Admin = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -60,6 +76,7 @@ const Admin = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [banners, setBanners] = useState<any[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -67,12 +84,29 @@ const Admin = () => {
   const [sizeInput, setSizeInput] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   
+  // Banner form states
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string>("");
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerForm, setBannerForm] = useState({
+    id: "",
+    title: "",
+    subtitle: "",
+    cta_text: "",
+    cta_link: "",
+    bg_color: "#1a1a2e",
+    image_url: "",
+    display_order: "0",
+    is_active: true,
+  });
+  
   // Product form
   const [productForm, setProductForm] = useState({
     id: "",
     title: "",
     description: "",
     price: "",
+    compare_at_price: "",
     stock_quantity: "",
     category_id: "",
     club: "",
@@ -117,15 +151,17 @@ const Admin = () => {
   };
 
   const fetchData = async () => {
-    const [productsRes, ordersRes, categoriesRes] = await Promise.all([
+    const [productsRes, ordersRes, categoriesRes, bannersRes] = await Promise.all([
       supabase.from("products").select("*, categories(name)").order("created_at", { ascending: false }),
       supabase.from("orders").select("*, products(title)").order("created_at", { ascending: false }),
       supabase.from("categories").select("*"),
+      supabase.from("banners").select("*").order("display_order", { ascending: true }),
     ]);
 
     setProducts(productsRes.data || []);
     setOrders(ordersRes.data || []);
     setCategories(categoriesRes.data || []);
+    setBanners(bannersRes.data || []);
   };
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -146,6 +182,7 @@ const Admin = () => {
         title: productForm.title.trim(),
         description: productForm.description.trim() || undefined,
         price: parseFloat(productForm.price),
+        compare_at_price: productForm.compare_at_price ? parseFloat(productForm.compare_at_price) : null,
         stock_quantity: parseInt(productForm.stock_quantity),
         club: productForm.club.trim() || undefined,
         color: productForm.color.trim() || undefined,
@@ -185,6 +222,7 @@ const Admin = () => {
         title: validatedData.title,
         description: validatedData.description || null,
         price: validatedData.price,
+        compare_at_price: validatedData.compare_at_price,
         stock_quantity: validatedData.stock_quantity,
         category_id: validatedData.category_id || null,
         club: validatedData.club || null,
@@ -231,6 +269,7 @@ const Admin = () => {
       title: product.title,
       description: product.description || "",
       price: product.price.toString(),
+      compare_at_price: product.compare_at_price?.toString() || "",
       stock_quantity: product.stock_quantity.toString(),
       category_id: product.category_id || "",
       club: product.club || "",
@@ -263,6 +302,7 @@ const Admin = () => {
       title: "",
       description: "",
       price: "",
+      compare_at_price: "",
       stock_quantity: "",
       category_id: "",
       club: "",
@@ -350,6 +390,133 @@ const Admin = () => {
     fetchData();
   };
 
+  // Banner functions
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerFile(file);
+      setBannerPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleBannerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBannerUploading(true);
+
+    try {
+      const validatedData = bannerSchema.parse({
+        title: bannerForm.title.trim(),
+        subtitle: bannerForm.subtitle.trim() || undefined,
+        cta_text: bannerForm.cta_text.trim() || undefined,
+        cta_link: bannerForm.cta_link.trim() || undefined,
+        bg_color: bannerForm.bg_color || "#1a1a2e",
+        display_order: parseInt(bannerForm.display_order) || 0,
+        is_active: bannerForm.is_active,
+      });
+
+      let imageUrl = bannerForm.image_url;
+
+      if (bannerFile) {
+        const fileExt = bannerFile.name.split('.').pop();
+        const fileName = `banner-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, bannerFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrl;
+      }
+
+      const bannerData = {
+        title: validatedData.title,
+        subtitle: validatedData.subtitle || null,
+        cta_text: validatedData.cta_text || null,
+        cta_link: validatedData.cta_link || null,
+        bg_color: validatedData.bg_color,
+        image_url: imageUrl || null,
+        display_order: validatedData.display_order,
+        is_active: validatedData.is_active,
+      };
+
+      if (bannerForm.id) {
+        const { error } = await supabase
+          .from("banners")
+          .update(bannerData)
+          .eq("id", bannerForm.id);
+
+        if (error) throw error;
+        toast.success("Banner updated successfully!");
+      } else {
+        const { error } = await supabase.from("banners").insert(bannerData);
+        if (error) throw error;
+        toast.success("Banner added successfully!");
+      }
+
+      resetBannerForm();
+      fetchData();
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || "Failed to save banner");
+      }
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const handleEditBanner = (banner: any) => {
+    setBannerForm({
+      id: banner.id,
+      title: banner.title,
+      subtitle: banner.subtitle || "",
+      cta_text: banner.cta_text || "",
+      cta_link: banner.cta_link || "",
+      bg_color: banner.bg_color || "#1a1a2e",
+      image_url: banner.image_url || "",
+      display_order: banner.display_order?.toString() || "0",
+      is_active: banner.is_active ?? true,
+    });
+    setBannerPreview(banner.image_url || "");
+    setBannerFile(null);
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this banner?")) return;
+
+    const { error } = await supabase.from("banners").delete().eq("id", id);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success("Banner deleted successfully!");
+    fetchData();
+  };
+
+  const resetBannerForm = () => {
+    setBannerForm({
+      id: "",
+      title: "",
+      subtitle: "",
+      cta_text: "",
+      cta_link: "",
+      bg_color: "#1a1a2e",
+      image_url: "",
+      display_order: "0",
+      is_active: true,
+    });
+    setBannerFile(null);
+    setBannerPreview("");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -366,12 +533,13 @@ const Admin = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+        <h1 className="text-2xl md:text-4xl font-bold mb-8">Admin Dashboard</h1>
 
         <Tabs defaultValue="products">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="banners">Banners</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="space-y-6">
@@ -393,7 +561,18 @@ const Admin = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="price">Price *</Label>
+                      <Label htmlFor="sku">SKU (Product Code) *</Label>
+                      <Input
+                        id="sku"
+                        value={productForm.sku}
+                        onChange={(e) => setProductForm({ ...productForm, sku: e.target.value.toUpperCase() })}
+                        placeholder="PROD-001"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="price">Selling Price *</Label>
                       <Input
                         id="price"
                         type="number"
@@ -401,6 +580,18 @@ const Admin = () => {
                         value={productForm.price}
                         onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                         required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="compare_at_price">Compare at Price (Original)</Label>
+                      <Input
+                        id="compare_at_price"
+                        type="number"
+                        step="0.01"
+                        value={productForm.compare_at_price}
+                        onChange={(e) => setProductForm({ ...productForm, compare_at_price: e.target.value })}
+                        placeholder="Show strikethrough price"
                       />
                     </div>
 
@@ -446,17 +637,6 @@ const Admin = () => {
                         id="color"
                         value={productForm.color}
                         onChange={(e) => setProductForm({ ...productForm, color: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="sku">SKU (Product Code) *</Label>
-                      <Input
-                        id="sku"
-                        value={productForm.sku}
-                        onChange={(e) => setProductForm({ ...productForm, sku: e.target.value.toUpperCase() })}
-                        placeholder="PROD-001"
-                        required
                       />
                     </div>
 
@@ -605,7 +785,12 @@ const Admin = () => {
                         <TableRow key={product.id}>
                           <TableCell className="font-mono text-xs">{product.sku}</TableCell>
                           <TableCell>{product.title}</TableCell>
-                          <TableCell>₹{product.price}</TableCell>
+                          <TableCell>
+                            {product.compare_at_price && (
+                              <span className="text-muted-foreground line-through mr-2">₹{product.compare_at_price}</span>
+                            )}
+                            ₹{product.price}
+                          </TableCell>
                           <TableCell>{product.stock_quantity}</TableCell>
                           <TableCell>
                             {product.sizes && product.sizes.length > 0 ? (
@@ -672,9 +857,9 @@ const Admin = () => {
                           <TableCell>₹{order.total_price}</TableCell>
                           <TableCell>
                             <span className={`px-2 py-1 rounded text-xs ${
-                              order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                              order.status === 'completed' ? 'bg-green-500/20 text-green-500' :
-                              'bg-red-500/20 text-red-500'
+                              order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-600' :
+                              order.status === 'completed' ? 'bg-green-500/20 text-green-600' :
+                              'bg-red-500/20 text-red-600'
                             }`}>
                               {order.status}
                             </span>
@@ -699,6 +884,218 @@ const Admin = () => {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="banners" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  {bannerForm.id ? "Edit Banner" : "Add New Banner"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleBannerSubmit} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="banner-title">Title *</Label>
+                      <Input
+                        id="banner-title"
+                        value={bannerForm.title}
+                        onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                        placeholder="e.g., New Season Jerseys"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="banner-subtitle">Subtitle</Label>
+                      <Input
+                        id="banner-subtitle"
+                        value={bannerForm.subtitle}
+                        onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
+                        placeholder="e.g., 24/25 Season kits now available"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="banner-cta">Button Text</Label>
+                      <Input
+                        id="banner-cta"
+                        value={bannerForm.cta_text}
+                        onChange={(e) => setBannerForm({ ...bannerForm, cta_text: e.target.value })}
+                        placeholder="e.g., Shop Now"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="banner-link">Button Link</Label>
+                      <Input
+                        id="banner-link"
+                        value={bannerForm.cta_link}
+                        onChange={(e) => setBannerForm({ ...bannerForm, cta_link: e.target.value })}
+                        placeholder="e.g., /products"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="banner-color">Background Color</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="banner-color"
+                          type="color"
+                          value={bannerForm.bg_color}
+                          onChange={(e) => setBannerForm({ ...bannerForm, bg_color: e.target.value })}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          value={bannerForm.bg_color}
+                          onChange={(e) => setBannerForm({ ...bannerForm, bg_color: e.target.value })}
+                          placeholder="#1a1a2e"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="banner-order">Display Order</Label>
+                      <Input
+                        id="banner-order"
+                        type="number"
+                        value={bannerForm.display_order}
+                        onChange={(e) => setBannerForm({ ...bannerForm, display_order: e.target.value })}
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="banner-active"
+                        checked={bannerForm.is_active}
+                        onCheckedChange={(checked) => setBannerForm({ ...bannerForm, is_active: checked })}
+                      />
+                      <Label htmlFor="banner-active">Active</Label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Label>Banner Image</Label>
+                      <div className="border-2 border-dashed rounded-lg p-6 text-center border-border">
+                        {bannerPreview ? (
+                          <div className="relative">
+                            <img
+                              src={bannerPreview}
+                              alt="Banner preview"
+                              className="max-h-48 mx-auto object-cover rounded-lg"
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="absolute top-2 right-2"
+                              onClick={() => {
+                                setBannerFile(null);
+                                setBannerPreview("");
+                                setBannerForm({ ...bannerForm, image_url: "" });
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <div>
+                              <label htmlFor="banner-file-upload" className="cursor-pointer">
+                                <span className="text-primary hover:underline">Click to upload</span>
+                                <span className="text-muted-foreground"> banner image</span>
+                              </label>
+                              <input
+                                id="banner-file-upload"
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleBannerFileChange}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Recommended: 1920x600 pixels
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      className="bg-gradient-to-r from-sport-red to-sport-red-dark"
+                      disabled={bannerUploading}
+                    >
+                      {bannerUploading ? "Uploading..." : bannerForm.id ? "Update Banner" : "Add Banner"}
+                    </Button>
+                    {bannerForm.id && (
+                      <Button type="button" variant="outline" onClick={resetBannerForm}>
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>All Banners</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {banners.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No banners yet. Add your first banner above.</p>
+                  ) : (
+                    banners.map((banner) => (
+                      <div
+                        key={banner.id}
+                        className="flex items-center gap-4 p-4 border rounded-lg"
+                      >
+                        {banner.image_url ? (
+                          <img
+                            src={banner.image_url}
+                            alt={banner.title}
+                            className="w-24 h-16 object-cover rounded"
+                          />
+                        ) : (
+                          <div
+                            className="w-24 h-16 rounded flex items-center justify-center"
+                            style={{ backgroundColor: banner.bg_color || "#1a1a2e" }}
+                          >
+                            <Image className="h-6 w-6 text-white/50" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-medium">{banner.title}</h3>
+                          <p className="text-sm text-muted-foreground">{banner.subtitle}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-xs px-2 py-0.5 rounded ${banner.is_active ? 'bg-green-500/20 text-green-600' : 'bg-muted text-muted-foreground'}`}>
+                              {banner.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">Order: {banner.display_order}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEditBanner(banner)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteBanner(banner.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>

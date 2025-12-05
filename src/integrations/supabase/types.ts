@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      banners: {
+        Row: {
+          bg_color: string | null
+          created_at: string | null
+          cta_link: string | null
+          cta_text: string | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bg_color?: string | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bg_color?: string | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -87,6 +129,7 @@ export type Database = {
           category_id: string | null
           club: string | null
           color: string | null
+          compare_at_price: number | null
           created_at: string | null
           description: string | null
           id: string
@@ -103,6 +146,7 @@ export type Database = {
           category_id?: string | null
           club?: string | null
           color?: string | null
+          compare_at_price?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -119,6 +163,7 @@ export type Database = {
           category_id?: string | null
           club?: string | null
           color?: string | null
+          compare_at_price?: number | null
           created_at?: string | null
           description?: string | null
           id?: string
