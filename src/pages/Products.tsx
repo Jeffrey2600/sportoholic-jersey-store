@@ -103,7 +103,7 @@ const Products = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-6">
           All Jerseys
         </h1>
 
@@ -160,7 +160,7 @@ const Products = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.id}

@@ -105,13 +105,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-border bg-gradient-to-br from-card to-card/80 shadow-[var(--shadow-card)]">
-        <CardHeader className="text-center border-b border-border/50 space-y-2 sm:space-y-4">
-          <img src={logo} alt="Sportoholic Logo" className="h-16 sm:h-20 w-auto mx-auto mb-2 sm:mb-4" />
-          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-sport-red-dark bg-clip-text text-transparent">
+      <Card className="w-full max-w-md border-border bg-card shadow-[var(--shadow-card)]">
+        <CardHeader className="text-center space-y-2 sm:space-y-4">
+          <img src={logo} alt="Sportoholic Logo" className="h-14 sm:h-16 w-auto mx-auto mb-2" />
+          <CardTitle className="text-xl sm:text-2xl font-bold">
             {isLogin ? "Welcome Back" : "Join Sportoholic"}
           </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
+          <CardDescription className="text-sm">
             {isLogin ? "Enter your credentials to access your account" : "Create your account and get your favorite jerseys"}
           </CardDescription>
         </CardHeader>
@@ -176,7 +176,7 @@ const Auth = () => {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-sport-red to-sport-red-dark hover:opacity-90 transition-opacity"
+              className="w-full bg-foreground text-background hover:bg-foreground/90"
               disabled={loading}
             >
               {loading ? "Processing..." : isLogin ? "Sign In" : "Create Account"}
