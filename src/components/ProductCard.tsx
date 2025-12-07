@@ -110,14 +110,14 @@ const ProductCard = ({
         <h3 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-sport-accent transition-colors">{title}</h3>
         {club && <p className="text-xs text-muted-foreground mb-2">{club}</p>}
         <div className="flex items-center gap-2 flex-wrap">
+          {hasDiscount && (
+            <span className="text-sm text-muted-foreground line-through">₹{compareAtPrice.toFixed(0)}</span>
+          )}
           <span className="text-base font-bold">₹{price.toFixed(0)}</span>
           {hasDiscount && (
-            <>
-              <span className="text-sm text-muted-foreground line-through">₹{compareAtPrice.toFixed(0)}</span>
-              <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded">
-                SAVE ₹{(compareAtPrice - price).toFixed(0)}
-              </span>
-            </>
+            <span className="text-[10px] bg-green-100 text-green-700 font-semibold px-1.5 py-0.5 rounded">
+              SAVE ₹{(compareAtPrice - price).toFixed(0)}
+            </span>
           )}
         </div>
       </div>
