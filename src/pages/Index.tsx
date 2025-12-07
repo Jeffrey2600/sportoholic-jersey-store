@@ -7,6 +7,11 @@ import Navbar from "@/components/Navbar";
 import HeroCarousel from "@/components/HeroCarousel";
 import ProductCarousel from "@/components/ProductCarousel";
 import CategoryFilters from "@/components/CategoryFilters";
+import BrandMarquee from "@/components/BrandMarquee";
+import Newsletter from "@/components/Newsletter";
+import TrustBadges from "@/components/TrustBadges";
+import ScrollToTop from "@/components/ScrollToTop";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import { Instagram, ArrowRight } from "lucide-react";
 
 const Index = () => {
@@ -46,6 +51,12 @@ const Index = () => {
       
       {/* Hero Carousel */}
       <HeroCarousel />
+
+      {/* Trust Badges */}
+      <TrustBadges />
+
+      {/* Brand Marquee */}
+      <BrandMarquee />
 
       {/* Trending Products with Filters */}
       <section className="py-8">
@@ -125,15 +136,19 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Newsletter */}
+      <Newsletter />
+
       {/* Social Banner */}
       <section className="py-12 bg-foreground text-background">
         <div className="container mx-auto px-4 text-center">
-          <Instagram className="h-8 w-8 mx-auto mb-4" />
+          <Instagram className="h-8 w-8 mx-auto mb-4 animate-pulse" />
           <h2 className="text-xl md:text-2xl font-bold mb-2">Follow Us on Instagram</h2>
-          <p className="text-background/70 mb-6">@sportoholic.store</p>
+          <p className="text-background/70 mb-6">@sportoho7ic__jersey_store</p>
           <Button 
             variant="secondary"
-            className="bg-background text-foreground hover:bg-background/90"
+            className="bg-background text-foreground hover:bg-background/90 hover:scale-105 transition-transform"
+            onClick={() => window.open('https://www.instagram.com/sportoho7ic__jersey_store', '_blank')}
           >
             Check Out
           </Button>
@@ -148,6 +163,10 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Floating Elements */}
+      <ScrollToTop />
+      <FloatingWhatsApp />
     </div>
   );
 };
