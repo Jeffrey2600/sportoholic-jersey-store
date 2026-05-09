@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/integrations/supabase/client";
+import bannerFootball from "@/assets/banner-football.jpg";
+import bannerCricket from "@/assets/banner-cricket.jpg";
+import bannerCollection from "@/assets/banner-collection.jpg";
 import {
   Carousel,
   CarouselContent,
@@ -25,16 +28,24 @@ const defaultSlides: SlideData[] = [
     subtitle: "Explore our latest collections and wear your passion!",
     cta_text: "Explore Collection",
     cta_link: "/products",
-    bg_color: "bg-foreground",
-    image_url: null,
+    bg_color: "#1a1a2e",
+    image_url: bannerFootball,
   },
   {
     title: "New Season Jerseys",
-    subtitle: "24/25 Season kits now available",
+    subtitle: "24/25 Season kits now available — football, cricket, F1 & more",
     cta_text: "Shop Now",
     cta_link: "/products",
-    bg_color: "bg-foreground",
-    image_url: null,
+    bg_color: "#0f1d3a",
+    image_url: bannerCricket,
+  },
+  {
+    title: "Authentic Kits, Bold Style",
+    subtitle: "Premium jerseys for every fan, every sport",
+    cta_text: "Browse Collection",
+    cta_link: "/products",
+    bg_color: "#1a0f0a",
+    image_url: bannerCollection,
   },
 ];
 
@@ -116,11 +127,14 @@ const HeroCarousel = () => {
                 style={!slide.bg_color?.startsWith('bg-') ? { backgroundColor: slide.bg_color || '#1a1a2e' } : undefined}
               >
                 {slide.image_url && (
-                  <img
-                    src={slide.image_url}
-                    alt={slide.title}
-                    className="absolute inset-0 w-full h-full object-cover opacity-30"
-                  />
+                  <>
+                    <img
+                      src={slide.image_url}
+                      alt={slide.title}
+                      className="absolute inset-0 w-full h-full object-cover opacity-70"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+                  </>
                 )}
                 <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
                   <div className="max-w-lg">
