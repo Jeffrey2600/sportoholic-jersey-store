@@ -1,23 +1,25 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Sparkles, Check } from "lucide-react";
+import { Phone, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const Newsletter = () => {
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setIsSubmitted(true);
-      toast.success("Thanks for subscribing! 🎉");
-      setTimeout(() => {
-        setEmail("");
-        setIsSubmitted(false);
-      }, 3000);
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      toast.error("Please enter a valid 10-digit Indian mobile number");
+      return;
     }
+    setIsSubmitted(true);
+    toast.success("Thanks! We'll WhatsApp you exclusive deals 🎉");
+    setTimeout(() => {
+      setPhone("");
+      setIsSubmitted(false);
+    }, 3000);
   };
 
   return (
@@ -37,18 +39,21 @@ const Newsletter = () => {
             Get 10% Off Your First Order
           </h2>
           <p className="text-background/70 mb-6 text-sm md:text-base">
-            Subscribe to our newsletter for exclusive offers, new arrivals, and sports updates!
+            Drop your number — we'll WhatsApp you exclusive deals and new arrivals!
           </p>
           
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
             <div className="relative flex-1">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <span className="absolute left-9 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span>
               <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 bg-background text-foreground h-12"
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="10-digit mobile number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                className="pl-16 bg-background text-foreground h-12"
                 required
               />
             </div>
