@@ -127,11 +127,14 @@ const HeroCarousel = () => {
                 style={!slide.bg_color?.startsWith('bg-') ? { backgroundColor: slide.bg_color || '#1a1a2e' } : undefined}
               >
                 {slide.image_url && (
-                  <img
-                    src={slide.image_url}
-                    alt={slide.title}
-                    className="absolute inset-0 w-full h-full object-cover opacity-30"
-                  />
+                  <>
+                    <img
+                      src={slide.image_url}
+                      alt={slide.title}
+                      className="absolute inset-0 w-full h-full object-cover opacity-70"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+                  </>
                 )}
                 <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
                   <div className="max-w-lg">
