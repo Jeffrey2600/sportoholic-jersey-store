@@ -12,6 +12,7 @@ import Newsletter from "@/components/Newsletter";
 import TrustBadges from "@/components/TrustBadges";
 import ScrollToTop from "@/components/ScrollToTop";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import ContactSection from "@/components/ContactSection";
 import { Instagram, ArrowRight } from "lucide-react";
 
 const Index = () => {
@@ -138,6 +139,9 @@ const Index = () => {
 
       {/* Newsletter */}
       <Newsletter />
+
+      {/* Contact Section */}
+      <ContactSection />
 
       {/* Social Banner */}
       <section className="py-12 bg-foreground text-background">
