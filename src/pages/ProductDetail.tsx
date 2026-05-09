@@ -284,13 +284,26 @@ const ProductDetail = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Your Email</Label>
+                  <Label htmlFor="phone">Phone Number</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    id="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={userPhone}
+                    onChange={(e) => setUserPhone(e.target.value.replace(/\D/g, ""))}
+                    placeholder="10-digit Indian mobile number"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="address">Delivery Address</Label>
+                  <textarea
+                    id="address"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Flat / House no, Street, City, State, PIN code"
+                    rows={3}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
                 <div>
