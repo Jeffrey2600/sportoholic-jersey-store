@@ -80,39 +80,54 @@ export type Database = {
       orders: {
         Row: {
           created_at: string | null
+          delivery_address: string | null
           id: string
+          payment_screenshot_url: string | null
           product_id: string
           product_sku: string | null
           quantity: number
+          selected_size: string | null
           status: string
           total_price: number
+          transaction_id: string | null
           user_email: string
           user_id: string
           user_name: string
+          user_phone: string | null
         }
         Insert: {
           created_at?: string | null
+          delivery_address?: string | null
           id?: string
+          payment_screenshot_url?: string | null
           product_id: string
           product_sku?: string | null
           quantity?: number
+          selected_size?: string | null
           status?: string
           total_price: number
+          transaction_id?: string | null
           user_email: string
           user_id: string
           user_name: string
+          user_phone?: string | null
         }
         Update: {
           created_at?: string | null
+          delivery_address?: string | null
           id?: string
+          payment_screenshot_url?: string | null
           product_id?: string
           product_sku?: string | null
           quantity?: number
+          selected_size?: string | null
           status?: string
           total_price?: number
+          transaction_id?: string | null
           user_email?: string
           user_id?: string
           user_name?: string
+          user_phone?: string | null
         }
         Relationships: [
           {

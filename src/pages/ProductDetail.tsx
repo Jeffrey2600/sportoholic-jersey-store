@@ -15,11 +15,13 @@ const orderSchema = z.object({
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters")
     .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens, and apostrophes"),
-  userEmail: z.string()
+  userPhone: z.string()
     .trim()
-    .min(1, "Email is required")
-    .email("Invalid email address")
-    .max(255, "Email must be less than 255 characters"),
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  deliveryAddress: z.string()
+    .trim()
+    .min(10, "Address must be at least 10 characters")
+    .max(500, "Address must be less than 500 characters"),
   quantity: z.number()
     .int("Quantity must be a whole number")
     .positive("Quantity must be positive")
@@ -34,7 +36,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -65,7 +68,7 @@ const ProductDetail = () => {
       
       if (profile) {
         setUserName(profile.full_name || "");
-        setUserEmail(profile.email || user.email || "");
+        setUserPhone(profile.phone_number || "");
       }
     }
   };
@@ -85,63 +88,43 @@ const ProductDetail = () => {
     setLoading(true);
 
     try {
-      // Validate inputs
       const validatedData = orderSchema.parse({
         userName: userName.trim(),
-        userEmail: userEmail.trim(),
+        userPhone: userPhone.trim(),
+        deliveryAddress: deliveryAddress.trim(),
         quantity,
       });
 
-      // Check stock availability
       if (validatedData.quantity > product.stock_quantity) {
         toast.error("Not enough stock available");
         setLoading(false);
         return;
       }
 
-      // Create order
-      const { error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          product_id: product.id,
-          quantity: validatedData.quantity,
-          total_price: product.price * validatedData.quantity,
-          user_email: validatedData.userEmail,
-          user_name: validatedData.userName,
-          product_sku: product.sku,
-        });
-
-      if (orderError) throw orderError;
-
-      // Update stock
-      const { error: stockError } = await supabase
-        .from("products")
-        .update({ stock_quantity: product.stock_quantity - validatedData.quantity })
-        .eq("id", product.id);
-
-      if (stockError) throw stockError;
-
-      // Send email notification
-      await supabase.functions.invoke("send-order-email", {
-        body: {
-          orderDetails: {
-            productTitle: product.title,
-            quantity: validatedData.quantity,
-            totalPrice: product.price * validatedData.quantity,
-            userName: validatedData.userName,
-            userEmail: validatedData.userEmail,
+      // Navigate to payment page with order context
+      navigate("/payment", {
+        state: {
+          product: {
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            sku: product.sku,
+            image_url: product.images?.[0] || product.image_url,
+            stock_quantity: product.stock_quantity,
           },
+          quantity: validatedData.quantity,
+          totalPrice: product.price * validatedData.quantity,
+          userName: validatedData.userName,
+          userPhone: validatedData.userPhone,
+          deliveryAddress: validatedData.deliveryAddress,
+          selectedSize,
         },
       });
-
-      toast.success("Order placed successfully! Check your email for confirmation.");
-      navigate("/");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error(error.message || "Failed to place order");
+        toast.error(error.message || "Failed to proceed");
       }
     } finally {
       setLoading(false);
@@ -301,13 +284,26 @@ const ProductDetail = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Your Email</Label>
+                  <Label htmlFor="phone">Phone Number</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    id="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={userPhone}
+                    onChange={(e) => setUserPhone(e.target.value.replace(/\D/g, ""))}
+                    placeholder="10-digit Indian mobile number"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="address">Delivery Address</Label>
+                  <textarea
+                    id="address"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                    placeholder="Flat / House no, Street, City, State, PIN code"
+                    rows={3}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   />
                 </div>
                 <div>
@@ -331,7 +327,7 @@ const ProductDetail = () => {
               disabled={product.stock_quantity === 0 || loading}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
-              {loading ? "Processing..." : "Order Now"}
+              {loading ? "Processing..." : "Proceed to Payment"}
             </Button>
           </div>
         </div>
