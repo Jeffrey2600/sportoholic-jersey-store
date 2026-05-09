@@ -68,7 +68,7 @@ const ProductDetail = () => {
       
       if (profile) {
         setUserName(profile.full_name || "");
-        setUserEmail(profile.email || user.email || "");
+        setUserPhone(profile.phone_number || "");
       }
     }
   };
@@ -88,63 +88,43 @@ const ProductDetail = () => {
     setLoading(true);
 
     try {
-      // Validate inputs
       const validatedData = orderSchema.parse({
         userName: userName.trim(),
-        userEmail: userEmail.trim(),
+        userPhone: userPhone.trim(),
+        deliveryAddress: deliveryAddress.trim(),
         quantity,
       });
 
-      // Check stock availability
       if (validatedData.quantity > product.stock_quantity) {
         toast.error("Not enough stock available");
         setLoading(false);
         return;
       }
 
-      // Create order
-      const { error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          product_id: product.id,
-          quantity: validatedData.quantity,
-          total_price: product.price * validatedData.quantity,
-          user_email: validatedData.userEmail,
-          user_name: validatedData.userName,
-          product_sku: product.sku,
-        });
-
-      if (orderError) throw orderError;
-
-      // Update stock
-      const { error: stockError } = await supabase
-        .from("products")
-        .update({ stock_quantity: product.stock_quantity - validatedData.quantity })
-        .eq("id", product.id);
-
-      if (stockError) throw stockError;
-
-      // Send email notification
-      await supabase.functions.invoke("send-order-email", {
-        body: {
-          orderDetails: {
-            productTitle: product.title,
-            quantity: validatedData.quantity,
-            totalPrice: product.price * validatedData.quantity,
-            userName: validatedData.userName,
-            userEmail: validatedData.userEmail,
+      // Navigate to payment page with order context
+      navigate("/payment", {
+        state: {
+          product: {
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            sku: product.sku,
+            image_url: product.images?.[0] || product.image_url,
+            stock_quantity: product.stock_quantity,
           },
+          quantity: validatedData.quantity,
+          totalPrice: product.price * validatedData.quantity,
+          userName: validatedData.userName,
+          userPhone: validatedData.userPhone,
+          deliveryAddress: validatedData.deliveryAddress,
+          selectedSize,
         },
       });
-
-      toast.success("Order placed successfully! Check your email for confirmation.");
-      navigate("/");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error(error.message || "Failed to place order");
+        toast.error(error.message || "Failed to proceed");
       }
     } finally {
       setLoading(false);
