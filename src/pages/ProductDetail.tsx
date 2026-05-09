@@ -327,7 +327,7 @@ const ProductDetail = () => {
               disabled={product.stock_quantity === 0 || loading}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
-              {loading ? "Processing..." : "Order Now"}
+              {loading ? "Processing..." : "Proceed to Payment"}
             </Button>
           </div>
         </div>
