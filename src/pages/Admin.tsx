@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Upload, X, Image } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, X, Image, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
@@ -866,19 +866,28 @@ const Admin = () => {
                           </TableCell>
                           <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <Select
-                              value={order.status}
-                              onValueChange={(value) => updateOrderStatus(order.id, value)}
-                            >
-                              <SelectTrigger className="w-32">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(`/admin/orders/${order.id}`)}
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-1" /> View
+                              </Button>
+                              <Select
+                                value={order.status}
+                                onValueChange={(value) => updateOrderStatus(order.id, value)}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="completed">Completed</SelectItem>
+                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

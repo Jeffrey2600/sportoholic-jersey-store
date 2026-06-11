@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Payment from "./pages/Payment";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import OrderDetail from "./pages/OrderDetail";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/orders/:id" element={<OrderDetail />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
