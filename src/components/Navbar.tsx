@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { User, LogOut, Menu, X } from "lucide-react";
+import { User, LogOut, Menu, X, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import logo from "@/assets/logo.png";
+import sizeChartAsset from "@/assets/size-chart.png.asset.json";
 
 const Navbar = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
