@@ -116,6 +116,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         marquee: "marquee 25s linear infinite",
         marquee2: "marquee2 25s linear infinite",
+        "marquee-rev": "marquee-rev 30s linear infinite",
+        "marquee-rev2": "marquee-rev2 30s linear infinite",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
         "fade-in-up": "fade-in-up 0.5s ease-out",
       },
