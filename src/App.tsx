@@ -10,6 +10,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Payment from "./pages/Payment";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import OrderDetail from "./pages/OrderDetail";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
