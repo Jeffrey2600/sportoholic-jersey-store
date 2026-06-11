@@ -177,4 +177,48 @@ const Navbar = () => {
   );
 };
 
+const SizeChartDialog = ({ compact = false }: { compact?: boolean }) => {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {compact ? (
+          <button
+            aria-label="Size chart"
+            className="relative p-2 rounded-full bg-gradient-to-br from-sport-red to-orange-500 text-white shadow-md hover:scale-105 active:scale-95 transition-transform"
+          >
+            <Ruler className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-background animate-pulse" />
+          </button>
+        ) : (
+          <Button
+            size="sm"
+            className="group relative overflow-hidden bg-gradient-to-r from-sport-red via-orange-500 to-amber-500 text-white shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
+          >
+            <Ruler className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
+            Size Chart
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Ruler className="h-5 w-5 text-sport-red" />
+            Jersey Size Chart
+          </DialogTitle>
+        </DialogHeader>
+        <div className="mt-2 rounded-lg overflow-hidden bg-secondary/40 border border-border">
+          <img
+            src={sizeChartAsset.url}
+            alt="Jersey size chart with chest and length measurements in inches"
+            className="w-full h-auto object-contain max-h-[75vh] mx-auto"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          All measurements are in inches. For best fit, measure across the chest and compare.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default Navbar;
