@@ -60,7 +60,7 @@ const Index = () => {
       <BrandMarquee />
 
       {/* Trending Products with Filters */}
-      <section className="py-8">
+      <section className="py-8 bg-gradient-to-b from-background via-amber-50/40 to-background">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl md:text-2xl font-bold">Trending Products</h2>
@@ -112,7 +112,7 @@ const Index = () => {
       )}
 
       {/* Categories Grid */}
-      <section className="py-8 bg-secondary/50">
+      <section className="py-8 bg-gradient-to-br from-blue-50 via-rose-50 to-emerald-50">
         <div className="container mx-auto px-4">
           <h2 className="text-xl md:text-2xl font-bold mb-6">Shop by Sport</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
