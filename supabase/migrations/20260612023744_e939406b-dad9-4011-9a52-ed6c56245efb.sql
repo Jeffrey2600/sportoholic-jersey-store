@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS full_sleeve boolean NOT NULL DEFAULT false; ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS extra_charges numeric(10,2) NOT NULL DEFAULT 0;

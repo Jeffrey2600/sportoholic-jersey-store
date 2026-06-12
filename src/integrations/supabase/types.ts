@@ -81,6 +81,8 @@ export type Database = {
         Row: {
           created_at: string | null
           delivery_address: string | null
+          extra_charges: number
+          full_sleeve: boolean
           id: string
           payment_screenshot_url: string | null
           product_id: string
@@ -98,6 +100,8 @@ export type Database = {
         Insert: {
           created_at?: string | null
           delivery_address?: string | null
+          extra_charges?: number
+          full_sleeve?: boolean
           id?: string
           payment_screenshot_url?: string | null
           product_id: string
@@ -115,6 +119,8 @@ export type Database = {
         Update: {
           created_at?: string | null
           delivery_address?: string | null
+          extra_charges?: number
+          full_sleeve?: boolean
           id?: string
           payment_screenshot_url?: string | null
           product_id?: string
