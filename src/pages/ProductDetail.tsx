@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Plus, Check, Shirt } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCart } from "@/contexts/CartContext";
 import { z } from "zod";
+
+const FULL_SLEEVE_EXTRA = 49;
 
 const orderSchema = z.object({
   userName: z.string()
@@ -31,6 +34,7 @@ const orderSchema = z.object({
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -39,6 +43,7 @@ const ProductDetail = () => {
   const [userPhone, setUserPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [fullSleeve, setFullSleeve] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
