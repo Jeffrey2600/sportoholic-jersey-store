@@ -197,6 +197,16 @@ const OrderDetail = () => {
                   <p className="text-xs text-muted-foreground">Quantity</p>
                   <p className="font-medium">{order.quantity}</p>
                 </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Full Sleeve</p>
+                  <p className={`font-medium ${order.full_sleeve ? "text-sport-accent" : ""}`}>
+                    {order.full_sleeve ? `Yes (+₹${order.extra_charges})` : "No"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Extra Charges</p>
+                  <p className="font-medium">₹{Number(order.extra_charges || 0).toFixed(0)}</p>
+                </div>
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <span className="text-muted-foreground">Total Amount</span>
