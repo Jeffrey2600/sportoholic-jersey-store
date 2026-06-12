@@ -106,7 +106,7 @@ const ProductDetail = () => {
         return;
       }
 
-      // Navigate to payment page with order context
+      const extra = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
       navigate("/payment", {
         state: {
           product: {
@@ -118,7 +118,9 @@ const ProductDetail = () => {
             stock_quantity: product.stock_quantity,
           },
           quantity: validatedData.quantity,
-          totalPrice: product.price * validatedData.quantity,
+          extraCharges: extra,
+          fullSleeve,
+          totalPrice: (product.price + extra) * validatedData.quantity,
           userName: validatedData.userName,
           userPhone: validatedData.userPhone,
           deliveryAddress: validatedData.deliveryAddress,
