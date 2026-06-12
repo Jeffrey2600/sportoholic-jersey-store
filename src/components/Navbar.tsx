@@ -224,4 +224,22 @@ const SizeChartDialog = ({ compact = false }: { compact?: boolean }) => {
   );
 };
 
+const CartIcon = () => {
+  const { totalItems } = useCart();
+  return (
+    <Link
+      to="/cart"
+      aria-label="Cart"
+      className="relative p-2 rounded-full hover:bg-secondary transition-colors"
+    >
+      <ShoppingCart className="h-5 w-5" />
+      {totalItems > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-sport-red text-white text-[10px] font-bold flex items-center justify-center">
+          {totalItems}
+        </span>
+      )}
+    </Link>
+  );
+};
+
 export default Navbar;
