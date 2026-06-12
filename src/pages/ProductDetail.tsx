@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Plus, Check, Shirt } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCart } from "@/contexts/CartContext";
 import { z } from "zod";
+
+const FULL_SLEEVE_EXTRA = 49;
 
 const orderSchema = z.object({
   userName: z.string()
@@ -31,6 +34,7 @@ const orderSchema = z.object({
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -39,6 +43,7 @@ const ProductDetail = () => {
   const [userPhone, setUserPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [fullSleeve, setFullSleeve] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -101,7 +106,7 @@ const ProductDetail = () => {
         return;
       }
 
-      // Navigate to payment page with order context
+      const extra = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
       navigate("/payment", {
         state: {
           product: {
@@ -113,7 +118,9 @@ const ProductDetail = () => {
             stock_quantity: product.stock_quantity,
           },
           quantity: validatedData.quantity,
-          totalPrice: product.price * validatedData.quantity,
+          extraCharges: extra,
+          fullSleeve,
+          totalPrice: (product.price + extra) * validatedData.quantity,
           userName: validatedData.userName,
           userPhone: validatedData.userPhone,
           deliveryAddress: validatedData.deliveryAddress,
@@ -239,9 +246,30 @@ const ProductDetail = () => {
             {product.club && (
               <p className="text-base sm:text-lg text-muted-foreground mb-2">{product.club}</p>
             )}
-            <p className="text-2xl sm:text-3xl font-bold text-primary mb-6">
-              ₹{product.price.toFixed(2)}
-            </p>
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <p className="text-2xl sm:text-3xl font-bold text-primary">
+                ₹{(product.price + (fullSleeve ? FULL_SLEEVE_EXTRA : 0)).toFixed(0)}
+              </p>
+              <button
+                type="button"
+                onClick={() => setFullSleeve((v) => !v)}
+                className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-full border-2 transition-all ${
+                  fullSleeve
+                    ? "bg-sport-accent text-white border-sport-accent shadow-md"
+                    : "bg-amber-50 text-amber-900 border-amber-300 hover:border-amber-500"
+                }`}
+                aria-pressed={fullSleeve}
+              >
+                {fullSleeve ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                <Shirt className="h-3.5 w-3.5" />
+                Full sleeve {fullSleeve ? "added" : `+₹${FULL_SLEEVE_EXTRA}`}
+              </button>
+            </div>
+            {fullSleeve && (
+              <p className="text-xs text-muted-foreground mb-4">
+                Base ₹{product.price.toFixed(0)} + Full sleeve ₹{FULL_SLEEVE_EXTRA}
+              </p>
+            )}
 
             <p className="text-muted-foreground mb-6">{product.description}</p>
 
@@ -320,15 +348,43 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <Button
-              size="lg"
-              className="w-full bg-foreground text-background hover:bg-foreground/90"
-              onClick={handleOrder}
-              disabled={product.stock_quantity === 0 || loading}
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              {loading ? "Processing..." : "Proceed to Payment"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:flex-1 border-2"
+                onClick={() => {
+                  if (product.sizes?.length > 0 && !selectedSize) {
+                    toast.error("Please select a size");
+                    return;
+                  }
+                  addItem({
+                    productId: product.id,
+                    title: product.title,
+                    price: Number(product.price),
+                    imageUrl: product.images?.[0] || product.image_url,
+                    sku: product.sku,
+                    size: selectedSize || undefined,
+                    fullSleeve,
+                    extraCharges: fullSleeve ? FULL_SLEEVE_EXTRA : 0,
+                    quantity,
+                    stockQuantity: product.stock_quantity,
+                  });
+                }}
+                disabled={product.stock_quantity === 0}
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Add to Cart
+              </Button>
+              <Button
+                size="lg"
+                className="w-full sm:flex-1 bg-foreground text-background hover:bg-foreground/90"
+                onClick={handleOrder}
+                disabled={product.stock_quantity === 0 || loading}
+              >
+                {loading ? "Processing..." : "Buy Now"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -7,9 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, ShieldCheck, Upload, Check, MapPin, Phone, User as UserIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  ShieldCheck,
+  Upload,
+  Check,
+  MapPin,
+  Phone,
+  User as UserIcon,
+  Shirt,
+} from "lucide-react";
 import paymentQr from "@/assets/payment-qr.png";
 import { z } from "zod";
+import { useCart, CartItem } from "@/contexts/CartContext";
 
 const UPI_ID = "balarohithpoco07-2@okicici";
 
@@ -20,12 +31,34 @@ const paymentSchema = z.object({
     .min(8, "Transaction ID must be at least 8 characters")
     .max(50, "Transaction ID is too long")
     .regex(/^[A-Za-z0-9]+$/, "Only letters and numbers are allowed"),
+  userName: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(100)
+    .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters"),
+  userPhone: z.string().trim().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  deliveryAddress: z.string().trim().min(10, "Address must be at least 10 characters").max(500),
 });
+
+interface LineItem {
+  productId: string;
+  title: string;
+  sku?: string;
+  imageUrl?: string;
+  basePrice: number;
+  extraCharges: number;
+  fullSleeve: boolean;
+  size?: string;
+  quantity: number;
+  stockQuantity: number;
+}
 
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const order = location.state as any;
+  const state = location.state as any;
+  const { clear } = useCart();
 
   const [user, setUser] = useState<any>(null);
   const [transactionId, setTransactionId] = useState("");
@@ -33,12 +66,72 @@ const Payment = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Editable customer details (prefilled if Buy Now passes them, else from profile)
+  const [userName, setUserName] = useState<string>(state?.userName || "");
+  const [userPhone, setUserPhone] = useState<string>(state?.userPhone || "");
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(state?.deliveryAddress || "");
+
+  // Normalize: either single product or cart array
+  const items: LineItem[] = useMemo(() => {
+    if (state?.cart) {
+      return (state.cart as CartItem[]).map((c) => ({
+        productId: c.productId,
+        title: c.title,
+        sku: c.sku,
+        imageUrl: c.imageUrl,
+        basePrice: c.price,
+        extraCharges: c.extraCharges,
+        fullSleeve: c.fullSleeve,
+        size: c.size,
+        quantity: c.quantity,
+        stockQuantity: c.stockQuantity,
+      }));
+    }
+    if (state?.product) {
+      return [
+        {
+          productId: state.product.id,
+          title: state.product.title,
+          sku: state.product.sku,
+          imageUrl: state.product.image_url,
+          basePrice: Number(state.product.price),
+          extraCharges: state.extraCharges || 0,
+          fullSleeve: !!state.fullSleeve,
+          size: state.selectedSize,
+          quantity: state.quantity,
+          stockQuantity: state.product.stock_quantity,
+        },
+      ];
+    }
+    return [];
+  }, [state]);
+
+  const totalPrice = useMemo(
+    () => items.reduce((s, i) => s + (i.basePrice + i.extraCharges) * i.quantity, 0),
+    [items]
+  );
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
-      if (!data.user) navigate("/auth");
+      if (!data.user) {
+        navigate("/auth");
+        return;
+      }
+      // Prefill from profile if not provided
+      if (!userName || !userPhone) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, phone_number")
+          .eq("id", data.user.id)
+          .maybeSingle();
+        if (profile) {
+          if (!userName) setUserName(profile.full_name || "");
+          if (!userPhone) setUserPhone(profile.phone_number || "");
+        }
+      }
     });
-    if (!order?.product) {
+    if (items.length === 0) {
       toast.error("No order details found");
       navigate("/");
     }
@@ -71,9 +164,13 @@ const Payment = () => {
     }
     setLoading(true);
     try {
-      const { transactionId: validTxn } = paymentSchema.parse({ transactionId: transactionId.trim() });
+      const validated = paymentSchema.parse({
+        transactionId: transactionId.trim(),
+        userName: userName.trim(),
+        userPhone: userPhone.trim(),
+        deliveryAddress: deliveryAddress.trim(),
+      });
 
-      // Upload screenshot
       const ext = screenshot.name.split(".").pop();
       const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
@@ -82,47 +179,64 @@ const Payment = () => {
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("payment-screenshots").getPublicUrl(path);
 
-      // Create order
-      const { error: orderError } = await supabase.from("orders").insert({
+      // Insert one order row per line item, sharing transaction id
+      const rows = items.map((it) => ({
         user_id: user.id,
-        product_id: order.product.id,
-        quantity: order.quantity,
-        total_price: order.totalPrice,
+        product_id: it.productId,
+        quantity: it.quantity,
+        total_price: (it.basePrice + it.extraCharges) * it.quantity,
         user_email: user.email,
-        user_name: order.userName,
-        user_phone: order.userPhone,
-        delivery_address: order.deliveryAddress,
-        product_sku: order.product.sku,
-        selected_size: order.selectedSize || null,
-        transaction_id: validTxn,
+        user_name: validated.userName,
+        user_phone: validated.userPhone,
+        delivery_address: validated.deliveryAddress,
+        product_sku: it.sku,
+        selected_size: it.size || null,
+        full_sleeve: it.fullSleeve,
+        extra_charges: it.extraCharges,
+        transaction_id: validated.transactionId,
         payment_screenshot_url: pub.publicUrl,
         status: "pending",
-      });
+      }));
+
+      const { error: orderError } = await supabase.from("orders").insert(rows);
       if (orderError) throw orderError;
 
-      // Update stock
-      await supabase
-        .from("products")
-        .update({ stock_quantity: order.product.stock_quantity - order.quantity })
-        .eq("id", order.product.id);
+      // Decrement stock per item (best-effort)
+      await Promise.all(
+        items.map((it) =>
+          supabase
+            .from("products")
+            .update({ stock_quantity: Math.max(0, it.stockQuantity - it.quantity) })
+            .eq("id", it.productId)
+        )
+      );
 
-      // Notify
-      await supabase.functions.invoke("send-order-email", {
-        body: {
-          orderDetails: {
-            productTitle: order.product.title,
-            quantity: order.quantity,
-            totalPrice: order.totalPrice,
-            userName: order.userName,
-            userEmail: user.email,
-            userPhone: order.userPhone,
-            deliveryAddress: order.deliveryAddress,
-            transactionId: validTxn,
-            paymentScreenshotUrl: pub.publicUrl,
+      // Notify (best-effort)
+      try {
+        await supabase.functions.invoke("send-order-email", {
+          body: {
+            orderDetails: {
+              items: items.map((it) => ({
+                title: it.title,
+                quantity: it.quantity,
+                size: it.size,
+                fullSleeve: it.fullSleeve,
+                extraCharges: it.extraCharges,
+                lineTotal: (it.basePrice + it.extraCharges) * it.quantity,
+              })),
+              totalPrice,
+              userName: validated.userName,
+              userEmail: user.email,
+              userPhone: validated.userPhone,
+              deliveryAddress: validated.deliveryAddress,
+              transactionId: validated.transactionId,
+              paymentScreenshotUrl: pub.publicUrl,
+            },
           },
-        },
-      });
+        });
+      } catch {}
 
+      if (state?.cart) clear();
       toast.success("Order placed! We'll verify your payment shortly.");
       navigate("/profile");
     } catch (err: any) {
@@ -133,69 +247,106 @@ const Payment = () => {
     }
   };
 
-  if (!order?.product) return null;
+  if (items.length === 0) return null;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
 
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Complete Your Payment</h1>
-        <p className="text-muted-foreground mb-6 text-sm">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Complete Your Payment</h1>
+        <p className="text-muted-foreground mb-5 text-sm">
           Review your order, scan the QR to pay, then submit your payment proof.
         </p>
 
         {/* Order Summary */}
-        <Card className="p-5 mb-6">
-          <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+        <Card className="p-4 sm:p-5 mb-5">
+          <h2 className="font-bold text-lg mb-3 flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-sport-accent" /> Order Summary
           </h2>
-          <div className="flex gap-4">
-            {order.product.image_url && (
-              <img
-                src={order.product.image_url}
-                alt={order.product.title}
-                className="w-24 h-24 rounded-lg object-cover bg-secondary"
-              />
-            )}
-            <div className="flex-1">
-              <h3 className="font-semibold">{order.product.title}</h3>
-              {order.product.sku && (
-                <p className="text-xs text-muted-foreground font-mono">SKU: {order.product.sku}</p>
-              )}
-              {order.selectedSize && (
-                <p className="text-sm mt-1">Size: <span className="font-medium">{order.selectedSize}</span></p>
-              )}
-              <p className="text-sm">Quantity: <span className="font-medium">{order.quantity}</span></p>
-              <p className="text-sm">Unit price: ₹{order.product.price.toFixed(0)}</p>
-            </div>
+          <div className="space-y-3">
+            {items.map((it, i) => (
+              <div key={i} className="flex gap-3 pb-3 border-b border-border last:border-0 last:pb-0">
+                {it.imageUrl && (
+                  <img src={it.imageUrl} alt={it.title} className="w-16 h-16 rounded-md object-cover bg-secondary" />
+                )}
+                <div className="flex-1 text-sm">
+                  <p className="font-semibold">{it.title}</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-0.5">
+                    {it.sku && <span className="font-mono">SKU: {it.sku}</span>}
+                    {it.size && <span>Size: {it.size}</span>}
+                    <span>Qty: {it.quantity}</span>
+                  </div>
+                  {it.fullSleeve && (
+                    <p className="text-xs text-sport-accent font-medium mt-1 flex items-center gap-1">
+                      <Shirt className="h-3 w-3" /> Full sleeve +₹{it.extraCharges}
+                    </p>
+                  )}
+                </div>
+                <span className="text-sm font-semibold">
+                  ₹{((it.basePrice + it.extraCharges) * it.quantity).toFixed(0)}
+                </span>
+              </div>
+            ))}
           </div>
 
-          <div className="border-t border-border mt-4 pt-4 space-y-2 text-sm">
-            <p className="flex items-center gap-2"><UserIcon className="h-4 w-4 text-muted-foreground" /> {order.userName}</p>
-            <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /> +91 {order.userPhone}</p>
-            <p className="flex items-start gap-2"><MapPin className="h-4 w-4 text-muted-foreground mt-0.5" /> <span>{order.deliveryAddress}</span></p>
-          </div>
-
-          <div className="border-t border-border mt-4 pt-4 flex items-center justify-between">
+          <div className="border-t border-border mt-3 pt-3 flex items-center justify-between">
             <span className="text-base font-medium">Amount to Pay</span>
-            <span className="text-2xl font-bold text-sport-accent">₹{order.totalPrice.toFixed(0)}</span>
+            <span className="text-2xl font-bold text-sport-accent">₹{totalPrice.toFixed(0)}</span>
           </div>
         </Card>
 
-        {/* QR Section */}
-        <Card className="p-5 mb-6 bg-gradient-to-br from-secondary/50 to-background">
-          <h2 className="font-bold text-lg mb-2 text-center">Pay with Any UPI App</h2>
-          <p className="text-xs text-center text-muted-foreground mb-4">
+        {/* Customer details */}
+        <Card className="p-4 sm:p-5 mb-5">
+          <h2 className="font-bold text-lg mb-3">Delivery Details</h2>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="cname">Name</Label>
+              <Input id="cname" value={userName} onChange={(e) => setUserName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="cphone">Phone</Label>
+              <Input
+                id="cphone"
+                inputMode="numeric"
+                maxLength={10}
+                value={userPhone}
+                onChange={(e) => setUserPhone(e.target.value.replace(/\D/g, ""))}
+                placeholder="10-digit Indian mobile"
+              />
+            </div>
+            <div>
+              <Label htmlFor="caddr">Delivery Address</Label>
+              <textarea
+                id="caddr"
+                rows={3}
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder="Flat / House, Street, City, State, PIN"
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-muted-foreground space-y-1">
+            <p className="flex items-center gap-2"><UserIcon className="h-3.5 w-3.5" /> {userName || "—"}</p>
+            <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> {userPhone ? `+91 ${userPhone}` : "—"}</p>
+            <p className="flex items-start gap-2"><MapPin className="h-3.5 w-3.5 mt-0.5" /> <span>{deliveryAddress || "—"}</span></p>
+          </div>
+        </Card>
+
+        {/* QR */}
+        <Card className="p-4 sm:p-5 mb-5 bg-gradient-to-br from-secondary/50 to-background">
+          <h2 className="font-bold text-lg mb-1 text-center">Pay with Any UPI App</h2>
+          <p className="text-xs text-center text-muted-foreground mb-3">
             Scan with GPay, PhonePe, Paytm, BHIM or any UPI app
           </p>
 
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-3">
             <div className="bg-white p-3 rounded-xl shadow-lg border-4 border-sport-accent/20">
-              <img src={paymentQr} alt="GPay UPI QR" className="w-56 h-56 object-contain" />
+              <img src={paymentQr} alt="GPay UPI QR" className="w-52 h-52 object-contain" />
             </div>
           </div>
 
@@ -207,15 +358,15 @@ const Payment = () => {
             </button>
           </div>
           <p className="text-center text-xs text-muted-foreground mt-3">
-            Pay exactly <span className="font-bold text-foreground">₹{order.totalPrice.toFixed(0)}</span> and keep the screenshot.
+            Pay exactly <span className="font-bold text-foreground">₹{totalPrice.toFixed(0)}</span> and keep the screenshot.
           </p>
         </Card>
 
-        {/* Proof of Payment */}
-        <Card className="p-5 mb-6">
-          <h2 className="font-bold text-lg mb-4">Submit Payment Proof</h2>
+        {/* Proof */}
+        <Card className="p-4 sm:p-5 mb-5">
+          <h2 className="font-bold text-lg mb-3">Submit Payment Proof</h2>
 
-          <div className="mb-4">
+          <div className="mb-3">
             <Label htmlFor="screenshot" className="mb-2 block">Payment Screenshot</Label>
             <label
               htmlFor="screenshot"
@@ -235,17 +386,11 @@ const Payment = () => {
                   <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 5MB</p>
                 </>
               )}
-              <input
-                id="screenshot"
-                type="file"
-                accept="image/*"
-                onChange={handleFile}
-                className="hidden"
-              />
+              <input id="screenshot" type="file" accept="image/*" onChange={handleFile} className="hidden" />
             </label>
           </div>
 
-          <div className="mb-2">
+          <div>
             <Label htmlFor="txn">UPI Transaction ID</Label>
             <Input
               id="txn"
@@ -266,11 +411,11 @@ const Payment = () => {
           disabled={loading}
           className="w-full bg-sport-accent hover:bg-sport-accent/90 text-white text-base h-12"
         >
-          {loading ? "Submitting..." : `Confirm & Place Order — ₹${order.totalPrice.toFixed(0)}`}
+          {loading ? "Submitting..." : `Confirm & Place Order — ₹${totalPrice.toFixed(0)}`}
         </Button>
 
-        <p className="text-xs text-center text-muted-foreground mt-4">
-          🔒 We'll verify your payment within a few hours and confirm your order via WhatsApp.
+        <p className="text-xs text-center text-muted-foreground mt-3">
+          🔒 We'll verify your payment within a few hours and confirm via WhatsApp.
         </p>
       </div>
     </div>

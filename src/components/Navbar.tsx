@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { User, LogOut, Menu, X, Ruler } from "lucide-react";
+import { User, LogOut, Menu, X, Ruler, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import logo from "@/assets/logo.png";
-import sizeChartAsset from "@/assets/size-chart.png.asset.json";
+import sizeChartImg from "@/assets/size-chart.png";
+import { useCart } from "@/contexts/CartContext";
 
 const Navbar = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -88,6 +89,7 @@ const Navbar = () => {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
             <SizeChartDialog />
+            <CartIcon />
             {user ? (
               <>
                 <Button asChild variant="ghost" size="sm">
@@ -115,6 +117,7 @@ const Navbar = () => {
           {/* Mobile actions */}
           <div className="md:hidden flex items-center gap-1">
             <SizeChartDialog compact />
+            <CartIcon />
             <button
               className="p-2 -mr-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -208,7 +211,7 @@ const SizeChartDialog = ({ compact = false }: { compact?: boolean }) => {
         </DialogHeader>
         <div className="mt-2 rounded-lg overflow-hidden bg-secondary/40 border border-border">
           <img
-            src={sizeChartAsset.url}
+            src={sizeChartImg}
             alt="Jersey size chart with chest and length measurements in inches"
             className="w-full h-auto object-contain max-h-[75vh] mx-auto"
           />
@@ -218,6 +221,24 @@ const SizeChartDialog = ({ compact = false }: { compact?: boolean }) => {
         </p>
       </DialogContent>
     </Dialog>
+  );
+};
+
+const CartIcon = () => {
+  const { totalItems } = useCart();
+  return (
+    <Link
+      to="/cart"
+      aria-label="Cart"
+      className="relative p-2 rounded-full hover:bg-secondary transition-colors"
+    >
+      <ShoppingCart className="h-5 w-5" />
+      {totalItems > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-sport-red text-white text-[10px] font-bold flex items-center justify-center">
+          {totalItems}
+        </span>
+      )}
+    </Link>
   );
 };
 
