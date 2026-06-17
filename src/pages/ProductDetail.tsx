@@ -416,6 +416,7 @@ const ProductDetail = () => {
                     size: selectedSize || undefined,
                     fullSleeve,
                     extraCharges: fullSleeve ? FULL_SLEEVE_EXTRA : 0,
+                    customizedName: customizedName.trim() || undefined,
                     quantity,
                     stockQuantity: product.stock_quantity,
                   });
