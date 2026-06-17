@@ -80,6 +80,7 @@ export type Database = {
       orders: {
         Row: {
           created_at: string | null
+          customized_name: string | null
           delivery_address: string | null
           extra_charges: number
           full_sleeve: boolean
@@ -99,6 +100,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          customized_name?: string | null
           delivery_address?: string | null
           extra_charges?: number
           full_sleeve?: boolean
@@ -118,6 +120,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          customized_name?: string | null
           delivery_address?: string | null
           extra_charges?: number
           full_sleeve?: boolean
