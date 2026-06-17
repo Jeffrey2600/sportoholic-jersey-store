@@ -49,6 +49,7 @@ interface LineItem {
   basePrice: number;
   extraCharges: number;
   fullSleeve: boolean;
+  customizedName?: string;
   size?: string;
   quantity: number;
   stockQuantity: number;
@@ -82,6 +83,7 @@ const Payment = () => {
         basePrice: c.price,
         extraCharges: c.extraCharges,
         fullSleeve: c.fullSleeve,
+        customizedName: c.customizedName,
         size: c.size,
         quantity: c.quantity,
         stockQuantity: c.stockQuantity,
@@ -97,6 +99,7 @@ const Payment = () => {
           basePrice: Number(state.product.price),
           extraCharges: state.extraCharges || 0,
           fullSleeve: !!state.fullSleeve,
+          customizedName: state.customizedName,
           size: state.selectedSize,
           quantity: state.quantity,
           stockQuantity: state.product.stock_quantity,
@@ -193,6 +196,7 @@ const Payment = () => {
         selected_size: it.size || null,
         full_sleeve: it.fullSleeve,
         extra_charges: it.extraCharges,
+        customized_name: it.customizedName || null,
         transaction_id: validated.transactionId,
         payment_screenshot_url: pub.publicUrl,
         status: "pending",
@@ -283,6 +287,11 @@ const Payment = () => {
                   {it.fullSleeve && (
                     <p className="text-xs text-sport-accent font-medium mt-1 flex items-center gap-1">
                       <Shirt className="h-3 w-3" /> Full sleeve +₹{it.extraCharges}
+                    </p>
+                  )}
+                  {it.customizedName && (
+                    <p className="text-xs text-violet-700 font-medium mt-1">
+                      Name print: <span className="font-bold">{it.customizedName}</span>
                     </p>
                   )}
                 </div>
