@@ -62,6 +62,9 @@ const Cart = () => {
                   {it.fullSleeve && (
                     <span className="text-sport-accent font-medium">Full sleeve (+₹{it.extraCharges})</span>
                   )}
+                  {it.customizedName && (
+                    <span className="text-violet-700 font-medium">Name: {it.customizedName}</span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center border border-border rounded-md">

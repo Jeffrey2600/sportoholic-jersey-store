@@ -10,6 +10,7 @@ export interface CartItem {
   size?: string;
   fullSleeve: boolean;
   extraCharges: number;
+  customizedName?: string;
   quantity: number;
   stockQuantity: number;
 }
@@ -47,7 +48,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         (p) =>
           p.productId === item.productId &&
           p.size === item.size &&
-          p.fullSleeve === item.fullSleeve
+          p.fullSleeve === item.fullSleeve &&
+          (p.customizedName || "") === (item.customizedName || "")
       );
       if (idx >= 0) {
         const copy = [...prev];

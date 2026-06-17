@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Plus, Check, Shirt } from "lucide-react";
+import { ShoppingCart, ArrowLeft, ChevronLeft, ChevronRight, Plus, Check, Shirt, Type, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
@@ -44,6 +44,8 @@ const ProductDetail = () => {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [fullSleeve, setFullSleeve] = useState(false);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [customizedName, setCustomizedName] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -107,6 +109,7 @@ const ProductDetail = () => {
       }
 
       const extra = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
+      const trimmedName = customizedName.trim();
       navigate("/payment", {
         state: {
           product: {
@@ -120,6 +123,7 @@ const ProductDetail = () => {
           quantity: validatedData.quantity,
           extraCharges: extra,
           fullSleeve,
+          customizedName: trimmedName || undefined,
           totalPrice: (product.price + extra) * validatedData.quantity,
           userName: validatedData.userName,
           userPhone: validatedData.userPhone,
@@ -264,7 +268,52 @@ const ProductDetail = () => {
                 <Shirt className="h-3.5 w-3.5" />
                 Full sleeve {fullSleeve ? "added" : `+₹${FULL_SLEEVE_EXTRA}`}
               </button>
+              <button
+                type="button"
+                onClick={() => setCustomizeOpen((v) => !v)}
+                className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-full border-2 transition-all ${
+                  customizedName.trim()
+                    ? "bg-violet-600 text-white border-violet-600 shadow-md"
+                    : "bg-violet-50 text-violet-900 border-violet-300 hover:border-violet-500"
+                }`}
+                aria-pressed={!!customizedName.trim()}
+              >
+                {customizedName.trim() ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                <Type className="h-3.5 w-3.5" />
+                {customizedName.trim() ? `Name: ${customizedName.trim()}` : "Customized name"}
+              </button>
             </div>
+            {customizeOpen && (
+              <div className="mb-4 p-3 rounded-lg border-2 border-violet-200 bg-violet-50/50">
+                <Label htmlFor="custname" className="text-xs font-semibold text-violet-900 mb-1.5 block">
+                  Name to print on the jersey (back)
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="custname"
+                    value={customizedName}
+                    onChange={(e) => setCustomizedName(e.target.value.slice(0, 20))}
+                    placeholder="e.g. RONALDO"
+                    maxLength={20}
+                    className="bg-white"
+                  />
+                  {customizedName && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCustomizedName("")}
+                      aria-label="Clear name"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  Max 20 characters. Leave empty if not needed.
+                </p>
+              </div>
+            )}
             {fullSleeve && (
               <p className="text-xs text-muted-foreground mb-4">
                 Base ₹{product.price.toFixed(0)} + Full sleeve ₹{FULL_SLEEVE_EXTRA}
@@ -367,6 +416,7 @@ const ProductDetail = () => {
                     size: selectedSize || undefined,
                     fullSleeve,
                     extraCharges: fullSleeve ? FULL_SLEEVE_EXTRA : 0,
+                    customizedName: customizedName.trim() || undefined,
                     quantity,
                     stockQuantity: product.stock_quantity,
                   });
