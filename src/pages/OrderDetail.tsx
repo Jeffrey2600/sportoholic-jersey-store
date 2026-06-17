@@ -207,6 +207,12 @@ const OrderDetail = () => {
                   <p className="text-xs text-muted-foreground">Extra Charges</p>
                   <p className="font-medium">₹{Number(order.extra_charges || 0).toFixed(0)}</p>
                 </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">Customized Name (printed on jersey)</p>
+                  <p className={`font-bold ${order.customized_name ? "text-violet-700 text-lg tracking-wide" : "text-muted-foreground"}`}>
+                    {order.customized_name || "— None —"}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <span className="text-muted-foreground">Total Amount</span>
