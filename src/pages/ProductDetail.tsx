@@ -109,6 +109,7 @@ const ProductDetail = () => {
       }
 
       const extra = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
+      const trimmedName = customizedName.trim();
       navigate("/payment", {
         state: {
           product: {
@@ -122,6 +123,7 @@ const ProductDetail = () => {
           quantity: validatedData.quantity,
           extraCharges: extra,
           fullSleeve,
+          customizedName: trimmedName || undefined,
           totalPrice: (product.price + extra) * validatedData.quantity,
           userName: validatedData.userName,
           userPhone: validatedData.userPhone,
