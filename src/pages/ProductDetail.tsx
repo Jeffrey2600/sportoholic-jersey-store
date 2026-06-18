@@ -420,7 +420,7 @@ const ProductDetail = () => {
                     sku: product.sku,
                     size: selectedSize || undefined,
                     fullSleeve,
-                    extraCharges: fullSleeve ? FULL_SLEEVE_EXTRA : 0,
+                    extraCharges: (fullSleeve ? FULL_SLEEVE_EXTRA : 0) + (customizedName.trim() ? CUSTOM_NAME_EXTRA : 0),
                     customizedName: customizedName.trim() || undefined,
                     quantity,
                     stockQuantity: product.stock_quantity,
