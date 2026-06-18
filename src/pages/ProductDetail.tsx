@@ -255,7 +255,7 @@ const ProductDetail = () => {
             )}
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               <p className="text-2xl sm:text-3xl font-bold text-primary">
-                ₹{(product.price + (fullSleeve ? FULL_SLEEVE_EXTRA : 0)).toFixed(0)}
+                ₹{(product.price + (fullSleeve ? FULL_SLEEVE_EXTRA : 0) + (customizedName.trim() ? CUSTOM_NAME_EXTRA : 0)).toFixed(0)}
               </p>
               <button
                 type="button"
