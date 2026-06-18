@@ -109,8 +109,10 @@ const ProductDetail = () => {
         return;
       }
 
-      const extra = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
+      const extraSleeve = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
       const trimmedName = customizedName.trim();
+      const extraName = trimmedName ? CUSTOM_NAME_EXTRA : 0;
+      const extra = extraSleeve + extraName;
       navigate("/payment", {
         state: {
           product: {
