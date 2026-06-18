@@ -283,7 +283,7 @@ const ProductDetail = () => {
               >
                 {customizedName.trim() ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                 <Type className="h-3.5 w-3.5" />
-                {customizedName.trim() ? `Name: ${customizedName.trim()}` : "Customized name"}
+                {customizedName.trim() ? `Name: ${customizedName.trim()} (+₹${CUSTOM_NAME_EXTRA})` : `Customized name +₹${CUSTOM_NAME_EXTRA}`}
               </button>
             </div>
             {customizeOpen && (
