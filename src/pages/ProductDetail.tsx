@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { z } from "zod";
 
 const FULL_SLEEVE_EXTRA = 49;
+const CUSTOM_NAME_EXTRA = 49;
 
 const orderSchema = z.object({
   userName: z.string()
