@@ -1,30 +1,21 @@
+## Add ₹49 price to Customized Name button
 
+### What
+Treat customized name printing as a paid add-on (₹49), same as full sleeve. Show the price on the toggle button, charge it at checkout, and display it clearly in cart, payment summary, and admin order panel.
 
-# Add Forgot Password / Password Reset Flow
+### Files to change
+- `src/pages/ProductDetail.tsx`
+  - Add `CUSTOM_NAME_EXTRA = 49` constant.
+  - Customized name button label: show `+₹49` when not selected, and include the charge in the active state text.
+  - `extraCharges` passed to cart/payment = full-sleeve extra + customized-name extra (so both can be selected together).
+- `src/contexts/CartContext.tsx`
+  - No structural changes needed; `extraCharges` stays a single total add-on field.
+- `src/pages/Cart.tsx`
+  - Show customized name charge separately (e.g. `Name print (+₹49)`) alongside the full-sleeve line.
+- `src/pages/Payment.tsx`
+  - Show customized name charge separately in the order summary line items.
+- `src/pages/OrderDetail.tsx`
+  - Split the "Extra Charges" display into two lines: "Full Sleeve" and "Customized Name", each with its own ₹49 value when applicable. Keep total amount unchanged.
 
-Currently, the Auth page only has login and signup -- there's no way to recover a forgotten password. This plan adds a complete password reset flow.
-
-## What You'll Get
-
-1. A "Forgot Password?" link on the login form
-2. A screen to enter your email and receive a password reset link
-3. A dedicated page where you set your new password after clicking the email link
-
-## Technical Details
-
-### 1. Update Auth Page (`src/pages/Auth.tsx`)
-- Add a "Forgot Password?" link below the password field (visible only in login mode)
-- Add a third view mode (`forgotPassword`) that shows an email input and a "Send Reset Link" button
-- Call the password reset API with `redirectTo` pointing to `/reset-password`
-
-### 2. Create Reset Password Page (`src/pages/ResetPassword.tsx`)
-- New page at `/reset-password` route
-- Detects the recovery token from the URL hash
-- Shows a form with "New Password" and "Confirm Password" fields
-- Validates passwords match and meet strength requirements
-- Calls the API to update the password
-- Redirects to home on success
-
-### 3. Add Route (`src/App.tsx`)
-- Register `/reset-password` as a new public route pointing to the `ResetPassword` page
-
+### Technical note
+The `orders` table only stores one `extra_charges` total. We derive the two line-item charges from the existing `full_sleeve` and `customized_name` booleans/fields at display time (each known to be ₹49 when present).

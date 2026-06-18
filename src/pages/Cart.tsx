@@ -60,10 +60,10 @@ const Cart = () => {
                 <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
                   {it.size && <span>Size: {it.size}</span>}
                   {it.fullSleeve && (
-                    <span className="text-sport-accent font-medium">Full sleeve (+₹{it.extraCharges})</span>
+                    <span className="text-sport-accent font-medium">Full sleeve (+₹49)</span>
                   )}
                   {it.customizedName && (
-                    <span className="text-violet-700 font-medium">Name: {it.customizedName}</span>
+                    <span className="text-violet-700 font-medium">Name: {it.customizedName} (+₹49)</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-2">

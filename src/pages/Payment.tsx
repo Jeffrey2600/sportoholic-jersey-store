@@ -286,12 +286,12 @@ const Payment = () => {
                   </div>
                   {it.fullSleeve && (
                     <p className="text-xs text-sport-accent font-medium mt-1 flex items-center gap-1">
-                      <Shirt className="h-3 w-3" /> Full sleeve +₹{it.extraCharges}
+                      <Shirt className="h-3 w-3" /> Full sleeve +₹49
                     </p>
                   )}
                   {it.customizedName && (
                     <p className="text-xs text-violet-700 font-medium mt-1">
-                      Name print: <span className="font-bold">{it.customizedName}</span>
+                      Name print: <span className="font-bold">{it.customizedName}</span> +₹49
                     </p>
                   )}
                 </div>

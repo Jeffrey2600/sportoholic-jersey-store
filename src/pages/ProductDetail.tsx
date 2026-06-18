@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { z } from "zod";
 
 const FULL_SLEEVE_EXTRA = 49;
+const CUSTOM_NAME_EXTRA = 49;
 
 const orderSchema = z.object({
   userName: z.string()
@@ -108,8 +109,10 @@ const ProductDetail = () => {
         return;
       }
 
-      const extra = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
+      const extraSleeve = fullSleeve ? FULL_SLEEVE_EXTRA : 0;
       const trimmedName = customizedName.trim();
+      const extraName = trimmedName ? CUSTOM_NAME_EXTRA : 0;
+      const extra = extraSleeve + extraName;
       navigate("/payment", {
         state: {
           product: {
@@ -252,7 +255,7 @@ const ProductDetail = () => {
             )}
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               <p className="text-2xl sm:text-3xl font-bold text-primary">
-                ₹{(product.price + (fullSleeve ? FULL_SLEEVE_EXTRA : 0)).toFixed(0)}
+                ₹{(product.price + (fullSleeve ? FULL_SLEEVE_EXTRA : 0) + (customizedName.trim() ? CUSTOM_NAME_EXTRA : 0)).toFixed(0)}
               </p>
               <button
                 type="button"
@@ -280,7 +283,7 @@ const ProductDetail = () => {
               >
                 {customizedName.trim() ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                 <Type className="h-3.5 w-3.5" />
-                {customizedName.trim() ? `Name: ${customizedName.trim()}` : "Customized name"}
+                {customizedName.trim() ? `Name: ${customizedName.trim()} (+₹${CUSTOM_NAME_EXTRA})` : `Customized name +₹${CUSTOM_NAME_EXTRA}`}
               </button>
             </div>
             {customizeOpen && (
@@ -314,9 +317,11 @@ const ProductDetail = () => {
                 </p>
               </div>
             )}
-            {fullSleeve && (
+            {(fullSleeve || customizedName.trim()) && (
               <p className="text-xs text-muted-foreground mb-4">
-                Base ₹{product.price.toFixed(0)} + Full sleeve ₹{FULL_SLEEVE_EXTRA}
+                Base ₹{product.price.toFixed(0)}
+                {fullSleeve && ` + Full sleeve ₹${FULL_SLEEVE_EXTRA}`}
+                {customizedName.trim() && ` + Name print ₹${CUSTOM_NAME_EXTRA}`}
               </p>
             )}
 
@@ -415,7 +420,7 @@ const ProductDetail = () => {
                     sku: product.sku,
                     size: selectedSize || undefined,
                     fullSleeve,
-                    extraCharges: fullSleeve ? FULL_SLEEVE_EXTRA : 0,
+                    extraCharges: (fullSleeve ? FULL_SLEEVE_EXTRA : 0) + (customizedName.trim() ? CUSTOM_NAME_EXTRA : 0),
                     customizedName: customizedName.trim() || undefined,
                     quantity,
                     stockQuantity: product.stock_quantity,
