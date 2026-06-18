@@ -200,11 +200,17 @@ const OrderDetail = () => {
                 <div>
                   <p className="text-xs text-muted-foreground">Full Sleeve</p>
                   <p className={`font-medium ${order.full_sleeve ? "text-sport-accent" : ""}`}>
-                    {order.full_sleeve ? `Yes (+₹${order.extra_charges})` : "No"}
+                    {order.full_sleeve ? "Yes (+₹49)" : "No"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Extra Charges</p>
+                  <p className="text-xs text-muted-foreground">Name Print</p>
+                  <p className={`font-medium ${order.customized_name ? "text-violet-700" : ""}`}>
+                    {order.customized_name ? "Yes (+₹49)" : "No"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">Total Extra Charges</p>
                   <p className="font-medium">₹{Number(order.extra_charges || 0).toFixed(0)}</p>
                 </div>
                 <div className="col-span-2">
@@ -213,6 +219,7 @@ const OrderDetail = () => {
                     {order.customized_name || "— None —"}
                   </p>
                 </div>
+
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <span className="text-muted-foreground">Total Amount</span>
