@@ -317,9 +317,11 @@ const ProductDetail = () => {
                 </p>
               </div>
             )}
-            {fullSleeve && (
+            {(fullSleeve || customizedName.trim()) && (
               <p className="text-xs text-muted-foreground mb-4">
-                Base ₹{product.price.toFixed(0)} + Full sleeve ₹{FULL_SLEEVE_EXTRA}
+                Base ₹{product.price.toFixed(0)}
+                {fullSleeve && ` + Full sleeve ₹${FULL_SLEEVE_EXTRA}`}
+                {customizedName.trim() && ` + Name print ₹${CUSTOM_NAME_EXTRA}`}
               </p>
             )}
 
