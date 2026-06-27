@@ -215,34 +215,39 @@ const Payment = () => {
         )
       );
 
-      // Notify (best-effort)
+      // Build bill payload (shared by email + on-screen)
+      const billItems = items.map((it) => ({
+        title: it.title,
+        sku: it.sku || null,
+        size: it.size || null,
+        quantity: it.quantity,
+        basePrice: it.basePrice,
+        extraCharges: it.extraCharges,
+        fullSleeve: it.fullSleeve,
+        customizedName: it.customizedName || null,
+        lineTotal: (it.basePrice + it.extraCharges) * it.quantity,
+      }));
+
+      const bill = {
+        customerName: validated.userName,
+        recipientEmail: user.email,
+        phone: validated.userPhone,
+        address: validated.deliveryAddress,
+        transactionId: validated.transactionId,
+        items: billItems,
+        totalAmount: totalPrice,
+      };
+
+      // Fire-and-forget: send branded bill email via Gmail SMTP
       try {
-        await supabase.functions.invoke("send-order-email", {
-          body: {
-            orderDetails: {
-              items: items.map((it) => ({
-                title: it.title,
-                quantity: it.quantity,
-                size: it.size,
-                fullSleeve: it.fullSleeve,
-                extraCharges: it.extraCharges,
-                lineTotal: (it.basePrice + it.extraCharges) * it.quantity,
-              })),
-              totalPrice,
-              userName: validated.userName,
-              userEmail: user.email,
-              userPhone: validated.userPhone,
-              deliveryAddress: validated.deliveryAddress,
-              transactionId: validated.transactionId,
-              paymentScreenshotUrl: pub.publicUrl,
-            },
-          },
-        });
-      } catch {}
+        await supabase.functions.invoke("send-bill-email", { body: bill });
+      } catch (e) {
+        console.error("Bill email failed:", e);
+      }
 
       if (state?.cart) clear();
-      toast.success("Order placed! We'll verify your payment shortly.");
-      navigate("/profile");
+      toast.success("Order placed! Bill emailed to " + user.email);
+      navigate("/order-success", { state: { bill } });
     } catch (err: any) {
       if (err instanceof z.ZodError) toast.error(err.errors[0].message);
       else toast.error(err.message || "Failed to place order");
