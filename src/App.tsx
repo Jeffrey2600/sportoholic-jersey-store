@@ -8,6 +8,7 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import ResetPassword from "./pages/ResetPassword";
 import Payment from "./pages/Payment";
+import OrderSuccess from "./pages/OrderSuccess";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import OrderDetail from "./pages/OrderDetail";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/orders/:id" element={<OrderDetail />} />
             <Route path="/profile" element={<Profile />} />
