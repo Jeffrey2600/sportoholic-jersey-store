@@ -18,7 +18,7 @@ import {
   User as UserIcon,
   Shirt,
 } from "lucide-react";
-import paymentQr from "@/assets/payment-qr.png";
+import paymentQr from "@/assets/payment-qr.png.asset.json";
 import { z } from "zod";
 import { useCart, CartItem } from "@/contexts/CartContext";
 
@@ -360,7 +360,7 @@ const Payment = () => {
 
           <div className="flex justify-center mb-3">
             <div className="bg-white p-3 rounded-xl shadow-lg border-4 border-sport-accent/20">
-              <img src={paymentQr} alt="GPay UPI QR" className="w-52 h-52 object-contain" />
+              <img src={paymentQr.url} alt="GPay UPI QR" className="w-52 h-52 object-contain" />
             </div>
           </div>
 
